@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://furkiozknn.github.io/ebru/"><img src="docs/02-gameplay.png" width="100%" alt="Ebru: a 3D paper-marbling art puzzle. Sprinkle, comb and shape paint on thickened water in an old workshop, then lay the paper."></a>
+  <a href="https://furkiozknn.github.io/ebru/"><img src="docs/banner.svg" width="100%" alt="Ebru: a 3D paper-marbling art puzzle. Sprinkle, comb and shape paint on thickened water in an old workshop, then lay the paper. Click to play in your browser."></a>
 </p>
 
 <p align="center">
@@ -11,6 +11,10 @@
 </p>
 
 <p align="center"><b>A 3D art puzzle about traditional Turkish paper marbling (ebru): sprinkle earth pigments on thickened water, draw through them with the awl and the comb, shape tulips and carnations, and lay the paper when the tray matches the master's pattern.</b></p>
+
+<p align="center">
+  <img src="docs/gameplay.gif" width="640" alt="Ebru gameplay: the bot sprinkles paint, draws through it with the awl and lays the paper, lesson after lesson">
+</p>
 
 <p align="center"><b>Play online: <a href="https://furkiozknn.github.io/ebru/">https://furkiozknn.github.io/ebru/</a></b> (desktop and phone, no install)</p>
 
@@ -25,6 +29,8 @@
   tools and pigments and opens with a short TR / EN note from the master with real names and facts.
 - **Provably solvable targets.** Every target is a recorded stroke list replayed in the same simulation; the live match %
   compares the tray with the target, and the hint replays the next stroke as a ghost on the water.
+- **Played by a bot.** `?auto` plays every lesson through the same stroke API as a player, with a small hand tremor.
+  Measured: **18/18 lessons solved, 48/54 stars**, 60 fps on an Intel UHD 620, 9-10 draw calls.
 - **Free tray and gallery.** Paint whatever you like, lay the paper and keep up to 12 sheets in the gallery; your last
   sheets hang to dry on the line behind the table.
 - **Paint rasterised on the GPU.** The polygons are filled with a signed-winding stencil pass into a multisampled render
@@ -143,8 +149,11 @@ other games: [Hisar](https://furkiozknn.github.io/kale-savunmasi/) ·
 [Martı](https://furkiozknn.github.io/marti/) · [Kervan](https://furkiozknn.github.io/kervan/) ·
 [Dolmuş](https://furkiozknn.github.io/dolmus/) · [Peri Golf](https://furkiozknn.github.io/peri-golf/) ·
 [Mehter](https://furkiozknn.github.io/mehter/) · [Boğaz Vapuru](https://furkiozknn.github.io/bogaz-vapuru/) ·
-[Simit Fırını](https://furkiozknn.github.io/simit-firini/) · [Lale Bahçesi](https://furkiozknn.github.io/lale-bahcesi/) ·
-[Karagöz](https://furkiozknn.github.io/karagoz/)
+[Simit Fırını](https://furkiozknn.github.io/simit-firini/) · [Karagöz](https://furkiozknn.github.io/karagoz/) ·
+[Lale Bahçesi](https://furkiozknn.github.io/lale-bahcesi/)
+
+**Round 5:** [Kapadokya Balonu](https://furkiozknn.github.io/kapadokya-balonu/) ·
+[Kırkpınar](https://furkiozknn.github.io/kirkpinar/) · [Çarşı Kaçışı](https://furkiozknn.github.io/carsi-kacisi/)
 
 ## Türkçe
 

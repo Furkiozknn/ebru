@@ -34,20 +34,25 @@
     "18 lessons in 3 chapters (basic, combed, flower ebru) with TR / EN notes from the master; every target is a replayed stroke recipe, so every lesson is solvable",
     "Live match %, ghost hint of the next stroke, up to 3 stars per lesson (54 in all), free tray with a 12-sheet gallery",
     "Paint rasterised on the GPU with a stencil pass into a multisampled render target; 60 fps on an Intel UHD 620",
-    "The ?auto bot plays all 18 lessons through the same stroke API as a player; one index.html, everything generated in code"
+    "The ?auto bot solved 18/18 lessons with 48/54 stars through the same stroke API as a player; one index.html, everything generated in code"
   ],
   "media": {
     "hero": "docs/02-gameplay.png",
     "screenshots": [
-      "docs/01-title.png",
+      "docs/card.jpg",
       "docs/02-gameplay.png",
+      "docs/01-title.png",
       "docs/03-lesson.png",
       "docs/04-result.png",
       "docs/05-lessons.png",
       "docs/06-phone.png"
     ],
-    "gifs": [],
-    "videos": []
+    "gifs": [
+      "docs/gameplay.gif"
+    ],
+    "videos": [
+      "docs/gameplay.mp4"
+    ]
   },
   "tests": null,
   "ci": {
