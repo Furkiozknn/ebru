@@ -1,0 +1,79 @@
+{
+  "schema_version": "1.0.0",
+  "id": "ebru",
+  "owner": "Furkiozknn",
+  "repository": "https://github.com/Furkiozknn/ebru",
+  "homepage": "https://furkiozknn.github.io/ebru/",
+  "releases": null,
+  "status": "active",
+  "category": "game",
+  "platform": [
+    "web"
+  ],
+  "primary_language": "JavaScript",
+  "technologies": [
+    "Three.js r170",
+    "WebGL 2",
+    "Canvas 2D",
+    "Web Audio API"
+  ],
+  "version": null,
+  "license": "MIT",
+  "topics": [
+    "browser-game",
+    "threejs",
+    "puzzle-game",
+    "paper-marbling",
+    "ebru",
+    "claude-code",
+    "claude-game-arena"
+  ],
+  "summary": "3D paper-marbling art puzzle: sprinkle, comb and shape paint on the water, then lay the paper, built by Claude Fable 5.1 · Kitreli suda boya serp, tara, lale aç ve kâğıdı yatır: 3D ebru bulmacası, Claude Fable 5.1 yaptı",
+  "key_features": [
+    "Deterministic mathematical-marbling simulation: drops push older paint outward, the awl leaves a chevron wake, the comb pulls 25 tines; colours never mix",
+    "18 lessons in 3 chapters (basic, combed, flower ebru) with TR / EN notes from the master; every target is a replayed stroke recipe, so every lesson is solvable",
+    "Live match %, ghost hint of the next stroke, up to 3 stars per lesson (54 in all), free tray with a 12-sheet gallery",
+    "Paint rasterised on the GPU with a stencil pass into a multisampled render target; 60 fps on an Intel UHD 620",
+    "The ?auto bot plays all 18 lessons through the same stroke API as a player; one index.html, everything generated in code"
+  ],
+  "media": {
+    "hero": "docs/02-gameplay.png",
+    "screenshots": [
+      "docs/01-title.png",
+      "docs/02-gameplay.png",
+      "docs/03-lesson.png",
+      "docs/04-result.png",
+      "docs/05-lessons.png",
+      "docs/06-phone.png"
+    ],
+    "gifs": [],
+    "videos": []
+  },
+  "tests": null,
+  "ci": {
+    "workflows": [],
+    "badge": null
+  },
+  "docs": {
+    "readme": "README.md",
+    "changelog": null,
+    "version_history": null,
+    "roadmap": null,
+    "security": null,
+    "contributing": null,
+    "license_file": "LICENSE"
+  },
+  "social": {
+    "headline": "Marble the water: sprinkle, comb and shape paint until the tray matches the master's pattern, then lay the paper · Suyu ebrula: boya serp, tara, şekil ver; tekne ustanın desenine uyunca kâğıdı yatır",
+    "hashtags": [
+      "claudecode",
+      "indiegame"
+    ],
+    "primary_link": "https://furkiozknn.github.io/ebru/"
+  },
+  "provenance": {
+    "generated_at": "2026-10-27",
+    "generator": "hand-written",
+    "rule": "mechanical fields read from the repository; editorial fields hand-written from the README and index.html; no field is generated from a guess"
+  }
+}
