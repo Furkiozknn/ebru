@@ -18,6 +18,10 @@
 
 <p align="center"><b>Play online: <a href="https://furkiozknn.github.io/ebru/">https://furkiozknn.github.io/ebru/</a></b> (desktop and phone, no install)</p>
 
+<!-- portals:start -->
+<p align="center">Also on: <a href="https://furkiozknn.itch.io/ebru">itch.io</a> &middot; <a href="https://playgama.ai/play/ke6m2clqm3wudz">Playgama</a></p>
+<!-- portals:end -->
+
 ## Highlights
 
 - **Marbling that behaves like marbling.** Every drop is a closed polygon and every tool is a closed-form deformation of
