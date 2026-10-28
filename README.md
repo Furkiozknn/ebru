@@ -213,3 +213,5 @@ tek bir prompt'tan yapıldı; v2 güncellemesi `prompts/ebru-v2.md` ile.
 ## License
 
 MIT, see [LICENSE](LICENSE).
+
+Like the game? You can support new rounds on [Buy Me a Coffee](https://buymeacoffee.com/furkiozkann). The game stays free.
