@@ -13,7 +13,7 @@
 <p align="center"><b>A 3D art puzzle about traditional Turkish paper marbling (ebru): sprinkle earth pigments on thickened water, draw through them with the awl and the comb, shape tulips and carnations, and lay the paper when the tray matches the master's pattern.</b></p>
 
 <p align="center">
-  <img src="docs/gameplay.gif" width="640" alt="Ebru gameplay: the bot sprinkles paint, draws through it with the awl and lays the paper, lesson after lesson">
+  <img src="docs/gameplay.gif" width="640" alt="Ebru gameplay: the bot sprinkles paint, follows the master's critique, lays the paper and earns a seal">
 </p>
 
 <p align="center"><b>Play online: <a href="https://furkiozknn.github.io/ebru/">https://furkiozknn.github.io/ebru/</a></b> (desktop and phone, no install)</p>

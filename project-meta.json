@@ -17,7 +17,7 @@
     "Canvas 2D",
     "Web Audio API"
   ],
-  "version": null,
+  "version": "2.0.0",
   "license": "MIT",
   "topics": [
     "browser-game",
@@ -28,13 +28,13 @@
     "claude-code",
     "claude-game-arena"
   ],
-  "summary": "3D paper-marbling art puzzle: sprinkle, comb and shape paint on the water, then lay the paper, built by Claude Fable 5.1 · Kitreli suda boya serp, tara, lale aç ve kâğıdı yatır: 3D ebru bulmacası, Claude Fable 5.1 yaptı",
+  "summary": "3D paper-marbling art puzzle, v2 with the master's critique, seals and ranks, built by Claude Fable 5.1 · Kıvamlı suda boya serp, tara, şekil ver: v2'de ustanın eleştirisi, mühürler ve dereceler olan 3D ebru bulmacası, Claude Fable 5.1 yaptı",
   "key_features": [
     "Deterministic mathematical-marbling simulation: drops push older paint outward, the awl leaves a chevron wake, the comb pulls 25 tines; colours never mix",
-    "18 lessons in 3 chapters (basic, combed, flower ebru) with TR / EN notes from the master; every target is a replayed stroke recipe, so every lesson is solvable",
-    "Live match %, ghost hint of the next stroke, up to 3 stars per lesson (54 in all), free tray with a 12-sheet gallery",
-    "Paint rasterised on the GPU with a stencil pass into a multisampled render target; 60 fps on an Intel UHD 620",
-    "The ?auto bot solved 18/18 lessons with 48/54 stars through the same stroke API as a player; one index.html, everything generated in code"
+    "18 lessons in 3 chapters (basic, combed, flower ebru); every target is a replayed stroke recipe, so every lesson is solvable",
+    "v2: the master's critique names the two worst pigment deviations live and on the result card; master's seals and a cirak / kalfa / usta rank; water thickness in the free tray; Bind it book-cover composite",
+    "Live match %, ghost hint of the next stroke, up to 3 stars per lesson (54 in all); paint rasterised on the GPU with a stencil pass, 58-60 fps on an Intel UHD 620",
+    "The ?auto bot solved 18/18 lessons with 48/54 stars and 12/18 seals through the same stroke API as a player; one index.html, everything generated in code"
   ],
   "media": {
     "hero": "docs/02-gameplay.png",
@@ -77,8 +77,9 @@
     "primary_link": "https://furkiozknn.github.io/ebru/"
   },
   "provenance": {
-    "generated_at": "2026-10-27",
+    "generated_at": "2026-10-28",
     "generator": "hand-written",
-    "rule": "mechanical fields read from the repository; editorial fields hand-written from the README and index.html; no field is generated from a guess"
+    "rule": "mechanical fields read from the repository; editorial fields hand-written from the README and index.html; no field is generated from a guess",
+    "note": "v2 upgrade 2026-10-28"
   }
 }
