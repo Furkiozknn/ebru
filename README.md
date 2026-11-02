@@ -41,7 +41,7 @@
 - **Provably solvable targets.** Every target is a recorded stroke list replayed in the same simulation; the live match %
   compares the tray with the target, and the hint replays the next stroke as a ghost on the water.
 - **Played by a bot.** `?auto` plays every lesson through the same stroke API as a player, with a small hand tremor.
-  Measured: **18/18 lessons solved, 48/54 stars, 12/18 seals**, 60 fps on an Intel UHD 620, 7-10 draw calls.
+  Measured after the 2026-11 redesign: **18/18 lessons solved, 48/54 stars, 12/18 seals**, 60 fps on an Intel UHD 620, 14-18 draw calls.
 - **Free tray, water thickness, gallery and book covers.** Paint whatever you like on thin, medium or thick water (drops
   spread wider and the awl drags a broader wake on thin water), lay the paper and keep up to 12 sheets in the gallery;
   bind any sheet into a book cover (leather spine and corners, the sheet as the board paper). Your last sheets hang to
@@ -126,11 +126,11 @@ points, fps, calls, bot log, errors, assets).
 <table>
   <tr>
     <td width="33%"><img src="docs/01-title.png" alt="Title screen"><br><sub>Title screen</sub></td>
-    <td width="33%"><img src="docs/02-gameplay.png" alt="Lesson 5 with only blue on the water and the master's critique under the tray"><br><sub>The master's critique under the tray</sub></td>
-    <td width="33%"><img src="docs/03-lesson.png" alt="A lesson starts with the master's note on a card over the tray"><br><sub>A lesson and the master's note</sub></td>
+    <td width="33%"><img src="docs/02-gameplay.png" alt="Lesson 5: red ochre drops rippling on the wet size, the brush dipping, the walnut tool tray"><br><sub>Drops rippling on the wet size</sub></td>
+    <td width="33%"><img src="docs/03-lesson.png" alt="Lesson 14 starts with the master's note on a paper card over the tray"><br><sub>A lesson and the master's note</sub></td>
   </tr>
   <tr>
-    <td><img src="docs/04-result.png" alt="Result: the finished sheet next to the target, with the critique and the kitten"><br><sub>The finished sheet next to the target</sub></td>
+    <td><img src="docs/04-result.png" alt="Result card on ebru paper: the tulip sheet next to the target, three stars, the master's seal and the kitten"><br><sub>The finished sheet, three stars and the seal</sub></td>
     <td><img src="docs/05-lessons.png" alt="Chapter map with stars and seals"><br><sub>Three chapters, 18 lessons, seals</sub></td>
     <td><img src="docs/06-phone.png" alt="Ebru on a phone"><br><sub>On a phone</sub></td>
   </tr>
@@ -186,6 +186,38 @@ Upgraded by **Claude Fable 5.1** with Claude Code from [prompts/ebru-v2.md](prom
 - The arena's Turkish Van kitten: asleep on the table edge (a sprite, one extra draw call) and cheering or thinking on
   the result card. Measured after the upgrade: bot 18/18, 48/54 stars, 12/18 seals, 58-60 fps and 7-10 draw calls on
   the UHD 620, zero JS errors with and without assets.
+
+### Redesign (2026-11)
+
+Redesigned by **Claude Fable 5.1** with Claude Code (branch `redesign`). Art direction: **ink & paper fine art**, the
+master's workshop in the morning window light. Palette: walnut, cream paper, lime plaster, ebru blue, red-ochre wax,
+brass, zinc. Nothing in the rules moved: lessons, targets, scoring, seals, saves, flags and the bot are the v2 ones.
+
+What changed:
+
+- **Room.** Canvas-generated wood grain, lime plaster and laid-paper textures on three merged static meshes with
+  world-projected UVs; a woven kilim; the window now shows a morning sky, a cypress and a far dome, and throws a soft
+  shaft of light across the table. Golden window sun, a cool room fill, a flickering oil lamp (point light and flame
+  sprite) and a little fog towards the far wall. A PMREM environment from a canvas equirect so the water and the steel
+  catch the window.
+- **Wet size.** The water is a low-roughness surface with a slowly creeping ripple normal map under the paint, so the
+  window's reflection shimmers on the kitre and the pigment reads wet rather than printed.
+- **The master's table.** Oil lamp, bowl of size with a ladle, ox-gall bowl, muller and a pile of ground ochre, a cup
+  of rose-twig brushes, a reed pen, a tulip in a vase, spare combs, a framed marbled sheet and a calligraphy panel on
+  the wall, marbled sheets drying on the line (drawn by the same simulation), a basket of scrap paper, a drawer with a
+  brass knob, turned legs, brass nails on the walnut tray rim.
+- **Tools and pots.** Rose-twig brush with bound horsehair, awl with a turned handle and brass ferrule, walnut comb with
+  a brass strip and a grip, glazed paint bowl with a spoon; glazed pigment pots with cork stoppers and paper labels.
+- **Animation.** Rings spread where every drop falls, the brush dips when it sprinkles, the paper bows while it falls
+  and bellies while it is peeled off the water, the drying sheets sway, the flame flickers.
+- **UI.** Every panel is a sheet of light (hafif) ebru paper drawn by the game's own simulation under a cream wash:
+  dark ink text, calligraphic italic serif headers with an ink flourish, ebru-blue ink buttons, red wax seals with a
+  stamp animation, a paper HUD strip with a marbled band, a walnut tool tray with paper labels and wet pigment dabs,
+  the target in a walnut frame. Phone portrait and landscape reworked: full-width tray, swatches on their own row.
+
+Measured on an Intel UHD 620 at 1280x720 (headless Chrome): 60 fps before and after; draw calls 9-10 before, 14-18
+after; triangles 2.8k before, 5.4-5.9k after; `?low` 60 fps, 14 calls; the `?auto` bot 18/18, 48/54 stars, 12/18 seals
+with assets and with `?noassets`, zero JS errors. Before/after: `docs/redesign-before-after.png`.
 
 Ebru is part of the **Claude Game Arena** series, where each game is built by a Claude model from one prompt. The
 other games: [Hisar](https://furkiozknn.github.io/kale-savunmasi/) ·
