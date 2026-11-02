@@ -1302,20 +1302,23 @@ const statics = mergedMesh(parts, lambert); scene.add(statics);
 const woodStatics = mergedMesh(woodParts, woodMat); scene.add(woodStatics);
 const paperStatics = mergedMesh(paperParts, paperMat); scene.add(paperStatics);
 
-// pigment jars: InstancedMesh with per-instance colours
+// pigment pots: glazed ceramic (MeshStandard picks up the window from the environment map), cork stoppers and a
+// paper label on each, three InstancedMeshes with per-instance colours
 const JAR_N = PAL.length;
-const jarGeo = new THREE.CylinderGeometry(0.03, 0.026, 0.065, 12), lidGeo = new THREE.CylinderGeometry(0.031, 0.031, 0.012, 12);
-const jars = new THREE.InstancedMesh(jarGeo, new THREE.MeshLambertMaterial({ color: 0xffffff }), JAR_N);
-const lids = new THREE.InstancedMesh(lidGeo, new THREE.MeshLambertMaterial({ color: 0x3a2a1c }), JAR_N);
+const jarGeo = new THREE.CylinderGeometry(0.028, 0.024, 0.062, 14), lidGeo = new THREE.CylinderGeometry(0.022, 0.026, 0.016, 12), labelGeo = new THREE.PlaneGeometry(0.03, 0.02);
+const jars = new THREE.InstancedMesh(jarGeo, new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.35, metalness: 0.0, envMapIntensity: 0.8 }), JAR_N);
+const lids = new THREE.InstancedMesh(lidGeo, new THREE.MeshLambertMaterial({ color: 0xb08a5a }), JAR_N);
+const labels = new THREE.InstancedMesh(labelGeo, new THREE.MeshLambertMaterial({ color: 0xefe6d2, map: paperGrainTex }), JAR_N);
 {
-  const m = new THREE.Matrix4();
+  const m = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), sc = new THREE.Vector3(1, 1, 1), pos = new THREE.Vector3(), col = new THREE.Color();
   for (let i = 0; i < JAR_N; i++) {
-    const x = -0.55 + i * (1.1 / (JAR_N - 1)), z = -0.45 + (i % 2) * 0.07;
-    m.makeTranslation(x, TABLE_Y + 0.0325, z); jars.setMatrixAt(i, m); jars.setColorAt(i, new THREE.Color(PAL[i].hex));
-    m.makeTranslation(x, TABLE_Y + 0.071, z); lids.setMatrixAt(i, m);
+    const x = -0.55 + i * (1.1 / (JAR_N - 1)), z = -0.45 + (i % 2) * 0.07, ry = (Math.random() - 0.5) * 0.6;
+    m.makeTranslation(x, TABLE_Y + 0.031, z); jars.setMatrixAt(i, m); col.set(PAL[i].hex).multiplyScalar(0.95); jars.setColorAt(i, col);
+    m.makeTranslation(x, TABLE_Y + 0.07, z); lids.setMatrixAt(i, m);
+    e.set(-0.12, ry, 0); q.setFromEuler(e); pos.set(x + Math.sin(ry) * 0.027, TABLE_Y + 0.03, z + Math.cos(ry) * 0.027); m.compose(pos, q, sc); labels.setMatrixAt(i, m);
   }
-  jars.instanceMatrix.needsUpdate = true; jars.instanceColor.needsUpdate = true; lids.instanceMatrix.needsUpdate = true;
-  jars.castShadow = lids.castShadow = true; jars.receiveShadow = true; scene.add(jars, lids);
+  jars.instanceMatrix.needsUpdate = true; jars.instanceColor.needsUpdate = true; lids.instanceMatrix.needsUpdate = true; labels.instanceMatrix.needsUpdate = true;
+  jars.castShadow = lids.castShadow = true; jars.receiveShadow = true; scene.add(jars, lids, labels);
 }
 
 // The water surface: the paint polygons are rasterised on the GPU into a multisampled render target with the
@@ -1409,7 +1412,10 @@ const pickPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -TRAY_Y);
 
 // paper: see paperCanvas above (grain shared with the stack and the cloth)
 const paperTex = paperTexture();
-const sheet = new THREE.Mesh(new THREE.PlaneGeometry(TRAY_W, TRAY_H), new THREE.MeshLambertMaterial({ map: paperTex, side: THREE.DoubleSide }));
+// the sheet carries its own pattern as a faint emissive so the finished marbling reads bright even with the window behind it
+const sheet = new THREE.Mesh(new THREE.PlaneGeometry(TRAY_W, TRAY_H, 24, 1), new THREE.MeshLambertMaterial({ map: paperTex, emissive: 0x8a8278, emissiveMap: paperTex, side: THREE.DoubleSide }));
+function setSheetMap(tex) { const m = sheet.material; if (m.map && m.map !== paperTex && m.map !== tex) m.map.dispose(); m.map = tex; m.emissiveMap = tex; m.needsUpdate = true; }
+const sheetBase = sheet.geometry.attributes.position.array.slice(); // flat positions; stepLay bends the sheet as it is lifted
 sheet.rotation.x = -Math.PI / 2; sheet.castShadow = true; sheet.visible = false; scene.add(sheet);
 // three sheets drying on the line
 const hanging = [-0.95, -0.4, 0.95].map(x => {
@@ -1436,27 +1442,38 @@ const DECOR = (() => {
 { const t = new THREE.CanvasTexture(DECOR[3]); t.colorSpace = THREE.SRGBColorSpace; framedSheet.material.map = t; framedSheet.material.needsUpdate = true; }
 DECOR.slice(0, 3).forEach((c, i) => setHangingTexture(i, c));
 
-// the active tool floats above the pointer
-const steel = new THREE.MeshStandardMaterial({ color: 0xc9c9d2, roughness: 0.35, metalness: 0.7 });
-const wood = new THREE.MeshLambertMaterial({ color: 0x7a4a26 }), bristle = new THREE.MeshLambertMaterial({ color: 0x2a2520 });
+// the active tool floats above the pointer: rose-twig brush with bound horsehair, awl with a turned handle and a brass
+// ferrule, walnut comb with steel pins and a grip, a glazed bowl of paint with a spoon for the big drop
+const steel = new THREE.MeshStandardMaterial({ color: 0xd0d0d8, roughness: 0.3, metalness: 0.8 });
+const brassMat = new THREE.MeshStandardMaterial({ color: C.brass, roughness: 0.4, metalness: 0.7 });
+const wood = new THREE.MeshLambertMaterial({ color: 0x7a4a26, map: woodTex }), roseWood = new THREE.MeshLambertMaterial({ color: 0x8c5a3a, map: woodTex }), bristle = new THREE.MeshLambertMaterial({ color: 0x2a2520 });
+const glaze = new THREE.MeshStandardMaterial({ color: 0x3f6f78, roughness: 0.3, metalness: 0.0, envMapIntensity: 0.8 });
 const toolMeshes = {};
 {
   const brush = new THREE.Group();
-  const h = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.01, 0.24, 8), wood); h.position.y = 0.17; brush.add(h);
-  const b = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.004, 0.07, 8), bristle); b.position.y = 0.035; brush.add(b);
+  const h = new THREE.Mesh(new THREE.CylinderGeometry(0.0075, 0.0105, 0.22, 8), roseWood); h.position.y = 0.17; h.rotation.z = 0.04; brush.add(h);
+  const knot = new THREE.Mesh(new THREE.SphereGeometry(0.011, 8, 6), roseWood); knot.position.set(0.002, 0.2, 0); knot.scale.set(1, 0.6, 1); brush.add(knot);
+  const tie = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.014, 10), new THREE.MeshLambertMaterial({ color: 0xc9b89a })); tie.position.y = 0.072; brush.add(tie);
+  const b = new THREE.Mesh(new THREE.CylinderGeometry(0.013, 0.003, 0.075, 8), bristle); b.position.y = 0.03; brush.add(b); brush.userData.bristles = b;
   brush.rotation.z = 0.35; toolMeshes.brush = brush;
   const big = new THREE.Group();
-  const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.024, 0.05, 12), new THREE.MeshLambertMaterial({ color: 0x9a7a5a })); cup.position.y = 0.06; big.add(cup);
-  const paint = new THREE.Mesh(new THREE.CircleGeometry(0.027, 12), new THREE.MeshLambertMaterial({ color: 0x1E6FB8 })); paint.rotation.x = -Math.PI / 2; paint.position.y = 0.084; big.add(paint); big.userData.paint = paint;
+  const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.032, 0.022, 0.045, 14), glaze); cup.position.y = 0.06; big.add(cup);
+  const paint = new THREE.Mesh(new THREE.CircleGeometry(0.028, 14), new THREE.MeshStandardMaterial({ color: C.blue, roughness: 0.2 })); paint.rotation.x = -Math.PI / 2; paint.position.y = 0.081; big.add(paint); big.userData.paint = paint;
+  const spoon = new THREE.Mesh(new THREE.CylinderGeometry(0.0015, 0.0015, 0.09, 6), steel); spoon.position.set(0.02, 0.1, 0); spoon.rotation.z = -0.5; big.add(spoon);
   big.rotation.z = -0.5; toolMeshes.big = big;
   const biz = new THREE.Group();
-  const n = new THREE.Mesh(new THREE.CylinderGeometry(0.0015, 0.0025, 0.12, 6), steel); n.position.y = 0.06; biz.add(n);
-  const hh = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.006, 0.08, 8), wood); hh.position.y = 0.16; biz.add(hh);
+  const n = new THREE.Mesh(new THREE.CylinderGeometry(0.0012, 0.0025, 0.12, 6), steel); n.position.y = 0.06; biz.add(n);
+  const fer = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.004, 0.014, 8), brassMat); fer.position.y = 0.125; biz.add(fer);
+  const hh = new THREE.Mesh(new THREE.CylinderGeometry(0.009, 0.0065, 0.07, 10), wood); hh.position.y = 0.165; biz.add(hh);
+  const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.011, 10, 8), wood); bulb.position.y = 0.205; biz.add(bulb);
   biz.rotation.z = 0.25; toolMeshes.biz = biz;
   const tarak = new THREE.Group();
-  const bar = new THREE.Mesh(new THREE.BoxGeometry(TOOL.tarak.teeth * TOOL.tarak.spacing / SW * TRAY_W + 0.02, 0.025, 0.03), wood); bar.position.y = 0.06; tarak.add(bar);
+  const barW = TOOL.tarak.teeth * TOOL.tarak.spacing / SW * TRAY_W + 0.02;
+  const bar = new THREE.Mesh(new THREE.BoxGeometry(barW, 0.02, 0.028), wood); bar.position.y = 0.06; tarak.add(bar);
+  const grip = new THREE.Mesh(new THREE.BoxGeometry(barW * 0.5, 0.022, 0.016), wood); grip.position.y = 0.081; tarak.add(grip);
+  const strip = new THREE.Mesh(new THREE.BoxGeometry(barW, 0.004, 0.03), brassMat); strip.position.y = 0.049; tarak.add(strip);
   const teethGeos = [];
-  for (let i = 0; i < TOOL.tarak.teeth; i++) { const g = new THREE.CylinderGeometry(0.0015, 0.0015, 0.06, 5); g.translate((i - (TOOL.tarak.teeth - 1) / 2) * TOOL.tarak.spacing / SW * TRAY_W, 0.02, 0); teethGeos.push(g); }
+  for (let i = 0; i < TOOL.tarak.teeth; i++) { const g = new THREE.CylinderGeometry(0.0012, 0.0012, 0.06, 5); g.translate((i - (TOOL.tarak.teeth - 1) / 2) * TOOL.tarak.spacing / SW * TRAY_W, 0.02, 0); teethGeos.push(g); }
   tarak.add(new THREE.Mesh(mergeGeometries(teethGeos, false), steel)); toolMeshes.tarak = tarak;
   for (const k in toolMeshes) { toolMeshes[k].visible = false; toolMeshes[k].traverse(o => { if (o.isMesh) o.castShadow = true; }); scene.add(toolMeshes[k]); }
 }
@@ -1712,7 +1729,7 @@ function layPaper() {
   if (G.state !== 'play' || G.paused || G.stroke) return;
   if (!G.sim.polys.length) { toast(t('emptyTray'), 'bad'); return; }
   G.state = 'laying'; G.lay = { t: 0, captured: false }; G.hint = null; clearPulse(); $('bLay').classList.remove('pulse'); hideCoach(); $('crit').hidden = true; redrawOverlay();
-  sheet.material.map = paperTex; sheet.material.needsUpdate = true; sheet.visible = true; sheet.position.set(0, TRAY_Y + 0.5, 0); sheet.rotation.set(-Math.PI / 2, 0, 0);
+  setSheetMap(paperTex); sheet.visible = true; sheet.position.set(0, TRAY_Y + 0.5, 0); sheet.rotation.set(-Math.PI / 2, 0, 0);
   sfxPaper(false); toast(t('laid'));
 }
 function captureSheet() {
@@ -1722,8 +1739,7 @@ function captureSheet() {
   const cp = paintToCanvas(512, 384);
   G.sheetCanvas = cp;
   const tex = new THREE.CanvasTexture(cp); tex.colorSpace = THREE.SRGBColorSpace;
-  if (sheet.material.map && sheet.material.map !== paperTex) sheet.material.map.dispose();
-  sheet.material.map = tex; sheet.material.needsUpdate = true;
+  setSheetMap(tex);
   G.sim.clear(); G.dirtyTex = true; G.lastResult = { match: m, strokes: G.strokes.length, crit: G.crit.slice(), hintUsed: G.hintUsed };
   setHangingTexture(G.hangSlot++ % 3, cp);
   sfxPaper(true);
@@ -1755,13 +1771,19 @@ function pushGallery(canvas, bound) { // keep the plain JPEG; the cover is recom
   while (GALLERY.length > 12) { GALLERY.shift(); BOUND.shift(); full = true; }
   saveGallery(); G.lastSaved = GALLERY.length - 1; return full;
 }
+// the paper is not a board: it bows while it falls and bellies while it is peeled off the water
+function bendSheet(amount) {
+  const p = sheet.geometry.attributes.position, a = p.array;
+  for (let i = 0; i < p.count; i++) { const u = sheetBase[i * 3] / TRAY_W + 0.5; a[i * 3 + 2] = sheetBase[i * 3 + 2] + amount * Math.sin(u * Math.PI); }
+  p.needsUpdate = true; sheet.geometry.computeVertexNormals();
+}
 function stepLay(dt) {
   const L = G.lay; L.t += dt; const tt = L.t;
-  if (tt < 0.7) { const f = tt / 0.7, e = 1 - (1 - f) * (1 - f); sheet.position.y = TRAY_Y + 0.5 * (1 - e) + 0.003; sheet.rotation.set(-Math.PI / 2 + 0.25 * (1 - e), 0, 0); }
-  else if (!L.captured) { L.captured = true; captureSheet(); sheet.position.y = TRAY_Y + 0.003; }
+  if (tt < 0.7) { const f = tt / 0.7, e = 1 - (1 - f) * (1 - f); sheet.position.y = TRAY_Y + 0.5 * (1 - e) + 0.003; sheet.rotation.set(-Math.PI / 2 + 0.25 * (1 - e), 0, 0); bendSheet(0.04 * (1 - e)); }
+  else if (!L.captured) { L.captured = true; captureSheet(); sheet.position.y = TRAY_Y + 0.003; bendSheet(0); }
   else if (tt < 1.0) { /* rest on the water */ }
   else if (tt < 2.2) {
-    const f = (tt - 1.0) / 1.2, e = f * f * (3 - 2 * f);
+    const f = (tt - 1.0) / 1.2, e = f * f * (3 - 2 * f); bendSheet(0.07 * Math.sin(f * Math.PI));
     const toward = CAM.portrait ? new THREE.Vector3(1, 0, 0) : new THREE.Vector3(0, 0, 1);
     sheet.position.copy(trayCentre).addScaledVector(toward, 0.12 * e); sheet.position.y = TRAY_Y + 0.003 + 0.42 * e;
     if (CAM.portrait) sheet.rotation.set(-Math.PI / 2, 0, -0.9 * e); else sheet.rotation.set(-Math.PI / 2 + 0.9 * e, 0, 0);
