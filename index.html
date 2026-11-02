@@ -1475,7 +1475,7 @@ const toolMeshes = {};
   const teethGeos = [];
   for (let i = 0; i < TOOL.tarak.teeth; i++) { const g = new THREE.CylinderGeometry(0.0012, 0.0012, 0.06, 5); g.translate((i - (TOOL.tarak.teeth - 1) / 2) * TOOL.tarak.spacing / SW * TRAY_W, 0.02, 0); teethGeos.push(g); }
   tarak.add(new THREE.Mesh(mergeGeometries(teethGeos, false), steel)); toolMeshes.tarak = tarak;
-  for (const k in toolMeshes) { toolMeshes[k].visible = false; toolMeshes[k].traverse(o => { if (o.isMesh) o.castShadow = true; }); scene.add(toolMeshes[k]); }
+  for (const k in toolMeshes) { toolMeshes[k].visible = false; toolMeshes[k].userData.rz = toolMeshes[k].rotation.z; toolMeshes[k].traverse(o => { if (o.isMesh) o.castShadow = true; }); scene.add(toolMeshes[k]); }
 }
 
 // lights: warm window sun with one shadow map over the table, soft hemisphere fill
@@ -1487,6 +1487,7 @@ const hemi = new THREE.HemisphereLight(0xffe9cc, 0x4a3222, 0.85); scene.add(hemi
 const fill = new THREE.DirectionalLight(0xa9bfe0, 0.4); fill.position.set(1.6, 1.4, 2.2); scene.add(fill);
 // the oil lamp (kandil) on the far right of the table: a small warm pool of light that flickers (see stepLamp)
 const lamp = new THREE.PointLight(0xffb060, 0.9, 1.6, 2); lamp.position.set(0.76, TABLE_Y + 0.26, -0.47); scene.add(lamp);
+const flame = (() => { const c = document.createElement('canvas'); c.width = 32; c.height = 64; const x = c.getContext('2d'); const g = x.createRadialGradient(16, 40, 2, 16, 32, 30); g.addColorStop(0, 'rgba(255,250,210,1)'); g.addColorStop(0.3, 'rgba(255,190,80,0.9)'); g.addColorStop(0.7, 'rgba(255,120,30,0.35)'); g.addColorStop(1, 'rgba(255,100,20,0)'); x.fillStyle = g; x.fillRect(0, 0, 32, 64); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false })); sp.position.set(0.76, TABLE_Y + 0.25, -0.47); sp.scale.set(0.03, 0.055, 1); scene.add(sp); return sp; })();
 // Environment for the MeshStandard surfaces (water, steel, brass): a small canvas equirect of the room, a bright
 // window on a warm wall, run through PMREM once at boot. It gives the wet paint its sheen and the tools a glint.
 const envTex = (() => {
@@ -1573,7 +1574,10 @@ const G = {
   hangSlot: 0, settingsFrom: 'title', lastDir: [0, 1], hidden: false,
   // v2
   thick: 1, hintUsed: false, coach: false, crit: [], tier: 0, lastSaved: -1,
+  ripples: [], // redesign: rings on the water where drops fell
 };
+const TOOLFX = { bob: 0 }; // the brush dips when it sprinkles
+function addRipple(x, y, r) { G.ripples.push({ x, y, r, t: 0 }); if (G.ripples.length > 40) G.ripples.shift(); TOOLFX.bob = 1; G.ovDirty = true; }
 const tools = () => G.free ? THICK[G.thick] : TOOL; // the tool table in force: thickness applies to the free tray only
 function redrawTray() { renderPaint(G.sim); G.dirtyTex = false; }
 function computeMatch() {
@@ -1622,6 +1626,12 @@ function drawOverlayNow() {
     // start marker
     c.globalAlpha = 1; c.fillStyle = '#d9a441'; c.beginPath(); c.arc(p[0][0], p[0][1], 11, 0, Math.PI * 2); c.fill();
   }
+  // ripples: two rings spreading from every drop, fading as they go
+  if (G.ripples.length) {
+    c.setLineDash([]);
+    for (const rp of G.ripples) { const f = rp.t / 0.7; c.globalAlpha = (1 - f) * 0.55; c.lineWidth = 3 - f * 2; c.strokeStyle = 'rgba(255,255,255,0.9)'; c.beginPath(); c.arc(rp.x, rp.y, rp.r + 6 + f * 70, 0, Math.PI * 2); c.stroke(); c.globalAlpha = (1 - f) * 0.3; c.beginPath(); c.arc(rp.x, rp.y, rp.r + 2 + f * 40, 0, Math.PI * 2); c.stroke(); }
+    c.globalAlpha = 1;
+  }
   // cursor
   if (G.hover && G.state === 'play' && !G.paused && !isPhone) {
     const h = G.hover; c.globalAlpha = 0.9; c.setLineDash([]); c.lineWidth = 2.5; c.strokeStyle = 'rgba(255,255,255,0.9)';
@@ -1643,7 +1653,7 @@ function startStroke(x, y) {
   x = clampS(x, 2, SW - 2); y = clampS(y, 2, SH - 2);
   G.undo.push({ snap: G.sim.snapshot(), strokes: G.strokes.slice() }); if (G.undo.length > 12) G.undo.shift();
   G.stroke = { k: G.tool, c: G.colour, p: [[x, y]] }; G.runner = new StrokeRunner(G.sim, tools());
-  const ev = G.runner.begin(G.stroke, x, y); for (const e of ev) sfxDrip(e.r);
+  const ev = G.runner.begin(G.stroke, x, y); for (const e of ev) { sfxDrip(e.r); addRipple(e.x, e.y, e.r); }
   if (G.tool === 'biz' || G.tool === 'tarak') swishStart();
   G.dirtyTex = true; G.pressing = true;
   if (G.coach) hideCoach();
@@ -1655,7 +1665,7 @@ function moveStroke(x, y) {
   if (d < 0.5) return;
   if (d > 1) G.lastDir = [dx / d, dy / d];
   G.stroke.p.push([x, y]); const before = G.runner.s.n; const ev = G.runner.move(x, y);
-  for (const e of ev) sfxDrip(e.r);
+  for (const e of ev) { sfxDrip(e.r); addRipple(e.x, e.y, e.r); }
   if (G.runner.s.n !== before) { G.dirtyTex = true; G.matchDirty = true; }
   if (AUD.swish) swishLevel(d * 60, G.tool === 'tarak');
 }
@@ -2186,7 +2196,9 @@ function placeTool() {
   if (G.state !== 'play' || G.paused || !G.hover) return;
   const m = toolMeshes[G.tool]; m.visible = true;
   const wx = (G.hover.x / SW - 0.5) * TRAY_W, wz = (G.hover.y / SH - 0.5) * TRAY_H;
-  m.position.set(wx, TRAY_Y + (G.pressing ? 0.0 : 0.035), wz);
+  const dip = Math.sin(TOOLFX.bob * Math.PI);
+  m.position.set(wx, TRAY_Y + (G.pressing ? 0.0 : 0.035) - dip * 0.012, wz);
+  m.rotation.z = m.userData.rz + (G.tool === 'brush' ? -0.35 : -0.08) * dip;
   if (G.tool === 'tarak') { const [dx, dy] = G.lastDir; m.rotation.y = Math.atan2(-dx, -dy); }
 }
 function tick(dt) {
@@ -2194,12 +2206,18 @@ function tick(dt) {
   botStep(dt);
   if (G.state === 'laying' && G.lay) stepLay(dt);
   if (G.hint !== null) { G.hintT += dt; G.ovDirty = true; }
+  if (G.ripples.length) { for (const rp of G.ripples) rp.t += dt; G.ripples = G.ripples.filter(rp => rp.t < 0.7); G.ovDirty = true; }
+  if (TOOLFX.bob > 0.001) TOOLFX.bob *= Math.exp(-dt * 7); else TOOLFX.bob = 0;
   if (G.matchDirty && G.state === 'play' && !G.free && G.time - G.matchAt > 0.25) { G.matchAt = G.time; computeMatch(); updateHud(); }
   if (!G.simming) { stepDust(dt); stepMascot(dt); stepLamp(); stepRoom(dt); }
 }
-function stepLamp() { lamp.intensity = 0.85 + Math.sin(G.time * 9.1) * 0.08 + Math.sin(G.time * 23.7) * 0.05; }
+function stepLamp() { const f = Math.sin(G.time * 9.1) * 0.08 + Math.sin(G.time * 23.7) * 0.05; lamp.intensity = 0.85 + f; flame.scale.set(0.03 + f * 0.1, 0.055 + f * 0.25, 1); flame.position.x = 0.76 + Math.sin(G.time * 13) * 0.0015; }
 // the drying sheets sway a little in the draught from the window
-function stepRoom(dt) { hanging.forEach((m, i) => { m.rotation.y = Math.sin(G.time * 0.7 + i * 2.1) * 0.05; m.rotation.x = Math.sin(G.time * 0.9 + i) * 0.03; }); }
+function stepRoom(dt) {
+  hanging.forEach((m, i) => { m.rotation.y = Math.sin(G.time * 0.7 + i * 2.1) * 0.05; m.rotation.x = Math.sin(G.time * 0.9 + i) * 0.03; });
+  rippleTex.offset.x += dt * 0.012; rippleTex.offset.y -= dt * 0.007; // the size (kitre) creeps, so the window's reflection shimmers
+  shaft.material.opacity = 0.45 + Math.sin(G.time * 0.5) * 0.06;
+}
 function exportState() {
   Object.assign(window.ebru, {
     state: G.state, paused: G.paused, free: G.free, lesson: G.L ? G.L.index + 1 : 0, match: Math.round(G.match * 1000) / 10, strokes: G.strokes.length,
