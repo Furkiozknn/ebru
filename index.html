@@ -1142,62 +1142,165 @@ const camera = new THREE.PerspectiveCamera(42, 1, 0.05, 30);
 const TRAY_W = 0.8, TRAY_H = 0.6, TRAY_Y = 0.80, TABLE_Y = 0.745;
 const trayCentre = new THREE.Vector3(0, TRAY_Y, 0);
 
-const parts = [];
+// ---- Canvas textures for the room (redesign 2026-11): wood grain, lime plaster, laid paper, kilim, window view ----
+function noiseCanvas(w, h, fn) { const c = document.createElement('canvas'); c.width = w; c.height = h; const x = c.getContext('2d'); fn(x, w, h); return c; }
+function texOf(can, repeat = 1) { const t = new THREE.CanvasTexture(can); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(repeat, repeat); t.anisotropy = Math.min(4, renderer.capabilities.getMaxAnisotropy()); return t; }
+// wood: long streaks with a slow wobble, a few darker knots; multiplied by the vertex colour, so it is drawn near white
+const woodTex = texOf(noiseCanvas(256, 256, (x, w, h) => {
+  x.fillStyle = '#d9c5a5'; x.fillRect(0, 0, w, h);
+  for (let i = 0; i < 420; i++) {
+    const y = Math.random() * h, len = 40 + Math.random() * 200, a = 0.05 + Math.random() * 0.14;
+    x.strokeStyle = `rgba(${Math.random() < 0.5 ? '90,55,25' : '160,120,80'},${a})`; x.lineWidth = 0.6 + Math.random() * 1.6;
+    x.beginPath(); const x0 = Math.random() * w; x.moveTo(x0, y);
+    for (let s = 1; s <= 6; s++) x.lineTo(x0 + len * s / 6, y + Math.sin(s * 1.3 + x0) * 2.2); x.stroke();
+  }
+  for (let i = 0; i < 4; i++) { const kx = Math.random() * w, ky = Math.random() * h; const g = x.createRadialGradient(kx, ky, 1, kx, ky, 12 + Math.random() * 10); g.addColorStop(0, 'rgba(70,40,15,.45)'); g.addColorStop(0.5, 'rgba(110,70,30,.2)'); g.addColorStop(1, 'rgba(110,70,30,0)'); x.fillStyle = g; x.fillRect(kx - 30, ky - 30, 60, 60); }
+}), 1);
+// lime plaster: soft mottle, a few hairline cracks, trowel marks
+const plasterTex = texOf(noiseCanvas(256, 256, (x, w, h) => {
+  x.fillStyle = '#e4d6bd'; x.fillRect(0, 0, w, h);
+  for (let i = 0; i < 1400; i++) { x.fillStyle = `rgba(${Math.random() < 0.5 ? '120,95,60' : '255,250,235'},${Math.random() * 0.12})`; const r = 2 + Math.random() * 9; x.beginPath(); x.arc(Math.random() * w, Math.random() * h, r, 0, 7); x.fill(); }
+  for (let i = 0; i < 30; i++) { x.strokeStyle = `rgba(255,255,245,${0.05 + Math.random() * 0.08})`; x.lineWidth = 6 + Math.random() * 10; x.beginPath(); const sx = Math.random() * w, sy = Math.random() * h; x.moveTo(sx, sy); x.quadraticCurveTo(sx + 40, sy + (Math.random() - 0.5) * 60, sx + 90, sy + (Math.random() - 0.5) * 20); x.stroke(); }
+  for (let i = 0; i < 5; i++) { x.strokeStyle = 'rgba(90,70,45,.25)'; x.lineWidth = 0.7; x.beginPath(); let px = Math.random() * w, py = Math.random() * h; x.moveTo(px, py); for (let s = 0; s < 8; s++) { px += (Math.random() - 0.3) * 14; py += (Math.random() - 0.5) * 14; x.lineTo(px, py); } x.stroke(); }
+}), 1);
+// paper grain: cream ground, fibres in two directions, low mottle, speckles; shared by the laid sheet, the stack and the cloth
+function paperCanvas(w = 256, h = 192, tone = '#efe6d2') {
+  return noiseCanvas(w, h, (x) => {
+    x.fillStyle = tone; x.fillRect(0, 0, w, h);
+    for (let i = 0; i < 60; i++) { const g = x.createRadialGradient(Math.random() * w, Math.random() * h, 2, Math.random() * w, Math.random() * h, 30 + Math.random() * 40); g.addColorStop(0, `rgba(${Math.random() < 0.5 ? '150,120,80' : '255,255,245'},${0.03 + Math.random() * 0.05})`); g.addColorStop(1, 'rgba(0,0,0,0)'); x.fillStyle = g; x.fillRect(0, 0, w, h); }
+    for (let i = 0; i < 900; i++) { const a = Math.random() * 0.1; x.strokeStyle = `rgba(120,90,50,${a})`; x.lineWidth = 0.5 + Math.random(); const px = Math.random() * w, py = Math.random() * h, l = 2 + Math.random() * 10, d = Math.random() < 0.6 ? 0 : Math.PI / 2 + (Math.random() - 0.5) * 0.6; x.beginPath(); x.moveTo(px, py); x.lineTo(px + Math.cos(d) * l, py + Math.sin(d) * l + (Math.random() - 0.5)); x.stroke(); }
+    for (let i = 0; i < 300; i++) { x.fillStyle = `rgba(80,60,30,${Math.random() * 0.18})`; x.fillRect(Math.random() * w, Math.random() * h, 1, 1); }
+  });
+}
+function paperTexture(w = 256, h = 192) { const t = new THREE.CanvasTexture(paperCanvas(w, h)); t.colorSpace = THREE.SRGBColorSpace; return t; }
+const paperGrainTex = texOf(paperCanvas(256, 256), 1);
+// kilim: bands with small stepped motifs in the pigment colours
+const kilimTex = (() => { const t = texOf(noiseCanvas(256, 512, (x, w, h) => {
+  const bands = ['#8a3a2a', '#2c4a8a', '#d9a441', '#8a3a2a', '#e7dfcb', '#2c4a8a', '#8a3a2a', '#4f7f4c', '#8a3a2a'];
+  bands.forEach((c, i) => { x.fillStyle = c; x.fillRect(0, i * h / bands.length, w, h / bands.length + 1); });
+  const bh = h / bands.length;
+  for (let i = 0; i < bands.length; i++) { x.fillStyle = i % 2 ? '#e7dfcb' : '#2a2520'; for (let k = 0; k < 8; k++) { const cx = (k + 0.5) * w / 8, cy = (i + 0.5) * bh; x.beginPath(); x.moveTo(cx, cy - bh * 0.3); x.lineTo(cx + 8, cy); x.lineTo(cx, cy + bh * 0.3); x.lineTo(cx - 8, cy); x.closePath(); x.fill(); } }
+  for (let i = 0; i < 1200; i++) { x.fillStyle = `rgba(0,0,0,${Math.random() * 0.12})`; x.fillRect(Math.random() * w, Math.random() * h, 2, 1); }
+}), 1); t.repeat.set(1, 1); return t; })();
+// the view through the window: morning sky, the glow of the sun, a cypress and a far dome with a minaret
+const windowTex = (() => { const t = new THREE.CanvasTexture(noiseCanvas(256, 256, (x, w, h) => {
+  const g = x.createLinearGradient(0, 0, 0, h); g.addColorStop(0, '#9fc3e6'); g.addColorStop(0.55, '#f4dcb0'); g.addColorStop(1, '#fff3d6'); x.fillStyle = g; x.fillRect(0, 0, w, h);
+  const s = x.createRadialGradient(70, 120, 5, 70, 120, 120); s.addColorStop(0, 'rgba(255,250,225,1)'); s.addColorStop(0.3, 'rgba(255,240,200,.7)'); s.addColorStop(1, 'rgba(255,240,200,0)'); x.fillStyle = s; x.fillRect(0, 0, w, h);
+  x.fillStyle = 'rgba(90,80,110,.45)'; // far city: dome and minaret
+  x.beginPath(); x.arc(180, 190, 26, Math.PI, 0); x.lineTo(206, 215); x.lineTo(154, 215); x.closePath(); x.fill();
+  x.fillRect(214, 150, 5, 65); x.beginPath(); x.moveTo(211, 150); x.lineTo(216.5, 136); x.lineTo(222, 150); x.closePath(); x.fill();
+  x.fillStyle = 'rgba(40,60,40,.75)'; // cypress, near
+  x.beginPath(); x.moveTo(40, 256); x.quadraticCurveTo(26, 190, 44, 120); x.quadraticCurveTo(62, 190, 48, 256); x.closePath(); x.fill();
+  x.fillStyle = 'rgba(120,110,90,.55)'; x.fillRect(0, 222, w, 34); // the sill / rooftops below
+  for (let i = 0; i < 200; i++) { x.fillStyle = `rgba(255,255,255,${Math.random() * 0.06})`; x.fillRect(Math.random() * w, Math.random() * h, 1, 1); } // glass haze
+})); t.colorSpace = THREE.SRGBColorSpace; return t; })();
+
+// ---- Geometry helpers: three merged static groups (wood / plaster / paper), each one draw call ----
+const parts = [], woodParts = [], paperParts = [];
 const _col = new THREE.Color();
 function colorize(g, color, jitter = 0.05) {
   _col.set(color); const n = g.attributes.position.count, arr = new Float32Array(n * 3);
   for (let i = 0; i < n; i++) { const j = 1 + (Math.random() - 0.5) * jitter; arr[i * 3] = _col.r * j; arr[i * 3 + 1] = _col.g * j; arr[i * 3 + 2] = _col.b * j; }
   g.setAttribute('color', new THREE.BufferAttribute(arr, 3)); return g;
 }
-function box(w, h, d, x, y, z, color, ry = 0, list = parts, jitter) { const g = new THREE.BoxGeometry(w, h, d); if (ry) g.rotateY(ry); g.translate(x, y, z); list.push(colorize(g, color, jitter)); return g; }
-function cyl(rt, rb, h, x, y, z, color, seg = 10, list = parts, rot) { const g = new THREE.CylinderGeometry(rt, rb, h, seg); if (rot) g.rotateZ(rot[0]).rotateY(rot[1]); g.translate(x, y, z); list.push(colorize(g, color)); return g; }
+// world-projected UVs after the geometry is placed, so one grain texture runs continuously along every plank;
+// grainY makes the grain vertical (legs, posts)
+function worldUV(g, scale = 1.6, grainY = false) {
+  const p = g.attributes.position, uv = g.attributes.uv;
+  for (let i = 0; i < p.count; i++) { const x = p.getX(i), y = p.getY(i), z = p.getZ(i); if (grainY) uv.setXY(i, y * scale, (x + z * 0.37) * scale); else uv.setXY(i, (x + z * 0.37) * scale, (y + z * 0.9) * scale); }
+  return g;
+}
+function box(w, h, d, x, y, z, color, ry = 0, list = parts, jitter, grainY) { const g = new THREE.BoxGeometry(w, h, d); if (ry) g.rotateY(ry); g.translate(x, y, z); worldUV(g, 1.6, grainY); list.push(colorize(g, color, jitter)); return g; }
+function cyl(rt, rb, h, x, y, z, color, seg = 10, list = parts, rot, grainY = true) { const g = new THREE.CylinderGeometry(rt, rb, h, seg); if (rot) g.rotateZ(rot[0]).rotateY(rot[1]); g.translate(x, y, z); worldUV(g, 1.6, grainY); list.push(colorize(g, color)); return g; }
 function mergedMesh(list, mat, shadow = true) { const g = mergeGeometries(list, false); const m = new THREE.Mesh(g, mat); m.castShadow = shadow; m.receiveShadow = true; return m; }
-const lambert = new THREE.MeshLambertMaterial({ vertexColors: true });
+const lambert = new THREE.MeshLambertMaterial({ vertexColors: true, map: plasterTex });
+const woodMat = new THREE.MeshLambertMaterial({ vertexColors: true, map: woodTex });
+const paperMat = new THREE.MeshLambertMaterial({ vertexColors: true, map: paperGrainTex });
+const W = woodParts, P = paperParts; // shorthand for the lists below
 
-// floor planks and a kilim
-for (let i = 0; i < 16; i++) box(0.36, 0.02, 7, -2.7 + i * 0.36, -0.01, -0.8, i % 2 ? 0x6b4a2e : 0x74522f, 0, parts, 0.12);
-const KIL = [0x8a3a2a, 0x2c4a8a, 0xd9a441, 0x8a3a2a, 0xe7dfcb, 0x2c4a8a, 0x8a3a2a];
-KIL.forEach((c, i) => box(2.2, 0.012, 0.2, 0, 0.006, -0.7 + i * 0.2, c, 0, parts, 0.08));
-// walls and window
-box(7, 3.2, 0.12, 0, 1.6, -1.75, 0xcbb79a, 0, parts, 0.06);
-box(0.12, 3.2, 6, -3.0, 1.6, 0.6, 0xc4ae90, 0, parts, 0.06);
-box(0.12, 3.2, 6, 3.0, 1.6, 0.6, 0xc4ae90, 0, parts, 0.06);
+// floor planks (oak, grain along x) and a kilim with its own woven texture
+for (let i = 0; i < 16; i++) box(0.36, 0.02, 7, -2.7 + i * 0.36, -0.01, -0.8, i % 2 ? 0x6b4a2e : 0x74522f, 0, W, 0.14, true);
+{ const k = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 1.4), new THREE.MeshLambertMaterial({ map: kilimTex })); k.rotation.x = -Math.PI / 2; k.position.set(0, 0.004, -0.1); k.receiveShadow = true; scene.add(k); }
+// walls: lime plaster, darker towards the floor (vertex colour gradient), a walnut skirting and a picture rail
+function wall(w, h, d, x, y, z) { const g = box(w, h, d, x, y, z, C.plaster, 0, parts, 0.05); const p = g.attributes.position, c = g.attributes.color; for (let i = 0; i < p.count; i++) { const f = 0.78 + 0.22 * Math.min(1, p.getY(i) / 2.2); c.setXYZ(i, c.getX(i) * f, c.getY(i) * f, c.getZ(i) * f); } }
+wall(7, 3.2, 0.12, 0, 1.6, -1.75); wall(0.12, 3.2, 6, -3.0, 1.6, 0.6); wall(0.12, 3.2, 6, 3.0, 1.6, 0.6);
+box(7, 0.12, 0.03, 0, 0.06, -1.68, C.walnutDark, 0, W); box(0.03, 0.12, 6, -2.93, 0.06, 0.6, C.walnutDark, 0, W); box(0.03, 0.12, 6, 2.93, 0.06, 0.6, C.walnutDark, 0, W);
+box(7, 0.04, 0.04, 0, 2.3, -1.68, C.walnut, 0, W);
+// window: walnut frame and muntins, a deep sill, the view as a lit pane
 const WX = 0.1, WY = 1.62, WW = 1.2, WH = 1.15;
-box(WW + 0.12, 0.07, 0.16, WX, WY + WH / 2, -1.69, 0x5a3b24); box(WW + 0.12, 0.07, 0.16, WX, WY - WH / 2, -1.69, 0x5a3b24);
-box(0.07, WH, 0.16, WX - WW / 2, WY, -1.69, 0x5a3b24); box(0.07, WH, 0.16, WX + WW / 2, WY, -1.69, 0x5a3b24);
-box(0.04, WH, 0.05, WX, WY, -1.67, 0x5a3b24); box(WW, 0.04, 0.05, WX, WY, -1.67, 0x5a3b24);
-box(WW + 0.3, 0.05, 0.3, WX, WY - WH / 2 - 0.05, -1.59, 0x8a6a48); // sill
-const pane = new THREE.Mesh(new THREE.PlaneGeometry(WW, WH), new THREE.MeshBasicMaterial({ color: 0xfff1cf })); pane.position.set(WX, WY, -1.685); scene.add(pane);
-// shelf with books and a jug on the right wall side
-box(1.4, 0.04, 0.3, -1.7, 1.3, -1.55, 0x6b4a2e);
-[[0x8a3a2a, 0.05], [0x2c4a8a, 0.04], [0x4f7f4c, 0.06], [0xd9a441, 0.035], [0x5a3b24, 0.05]].forEach(([c, w], i) => box(w, 0.26, 0.2, -2.2 + i * 0.07, 1.45, -1.55, c));
+box(WW + 0.12, 0.07, 0.16, WX, WY + WH / 2, -1.69, C.walnut, 0, W); box(WW + 0.12, 0.07, 0.16, WX, WY - WH / 2, -1.69, C.walnut, 0, W);
+box(0.07, WH, 0.16, WX - WW / 2, WY, -1.69, C.walnut, 0, W, undefined, true); box(0.07, WH, 0.16, WX + WW / 2, WY, -1.69, C.walnut, 0, W, undefined, true);
+box(0.04, WH, 0.05, WX, WY, -1.67, C.walnut, 0, W, undefined, true); box(WW, 0.04, 0.05, WX, WY, -1.67, C.walnut, 0, W);
+box(WW + 0.3, 0.05, 0.3, WX, WY - WH / 2 - 0.05, -1.59, C.oak, 0, W); // sill
+const pane = new THREE.Mesh(new THREE.PlaneGeometry(WW, WH), new THREE.MeshBasicMaterial({ map: windowTex })); pane.position.set(WX, WY, -1.685); scene.add(pane);
+// a shaft of window light towards the table: one additive quad with a soft gradient, dust motes drift inside it
+const shaft = (() => {
+  const c = noiseCanvas(64, 256, (x, w, h) => { const g = x.createLinearGradient(0, 0, 0, h); g.addColorStop(0, 'rgba(255,236,200,.55)'); g.addColorStop(0.6, 'rgba(255,236,200,.18)'); g.addColorStop(1, 'rgba(255,236,200,0)'); x.fillStyle = g; x.fillRect(0, 0, w, h); const s = x.createLinearGradient(0, 0, w, 0); s.addColorStop(0, 'rgba(0,0,0,1)'); s.addColorStop(0.25, 'rgba(0,0,0,0)'); s.addColorStop(0.75, 'rgba(0,0,0,0)'); s.addColorStop(1, 'rgba(0,0,0,1)'); x.globalCompositeOperation = 'destination-out'; x.fillStyle = s; x.fillRect(0, 0, w, h); });
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(1.25, 2.3), new THREE.MeshBasicMaterial({ map: t, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0.5, side: THREE.DoubleSide }));
+  m.position.set(WX + 0.35, WY - 0.75, -0.9); m.rotation.set(-0.95, 0.15, 0); m.renderOrder = 2; scene.add(m); return m;
+})();
+// shelf on the left wall: books, a jug, bottles of ox-gall and spare jars, a rolled sheet
+box(1.4, 0.04, 0.3, -1.7, 1.3, -1.55, C.walnut, 0, W); [[-2.35, 1.2], [-1.05, 1.2]].forEach(([x, y]) => box(0.04, 0.2, 0.26, x, y, -1.57, C.walnutDark, 0, W, undefined, true));
+[[0x8a3a2a, 0.05], [0x2c4a8a, 0.04], [0x4f7f4c, 0.06], [0xd9a441, 0.035], [0x5a3b24, 0.05], [0x6b4c9a, 0.045]].forEach(([c, w], i) => box(w, 0.26 - (i % 3) * 0.02, 0.2, -2.3 + i * 0.07, 1.45 - (i % 3) * 0.01, -1.55, c, 0, P, 0.1));
 cyl(0.05, 0.07, 0.22, -1.4, 1.43, -1.55, 0x9a7a5a, 12); cyl(0.03, 0.05, 0.08, -1.4, 1.58, -1.55, 0x9a7a5a, 12);
-// table
-box(1.7, 0.05, 1.15, 0, TABLE_Y - 0.025, 0, 0x8a6240, 0, parts, 0.08);
-box(1.7, 0.04, 0.05, 0, TABLE_Y - 0.07, 0.55, 0x6b4a2e); box(1.7, 0.04, 0.05, 0, TABLE_Y - 0.07, -0.55, 0x6b4a2e);
-[[-0.78, -0.5], [0.78, -0.5], [-0.78, 0.5], [0.78, 0.5]].forEach(([x, z]) => box(0.07, TABLE_Y - 0.05, 0.07, x, (TABLE_Y - 0.05) / 2, z, 0x5a3b24));
-// the tray (tekne): dark wooden rim, zinc-grey bottom
+[[-1.85, 0x3a5a3a, 0.03, 0.18], [-1.75, 0x6a3a2a, 0.025, 0.14], [-1.62, 0x2a2520, 0.028, 0.2]].forEach(([x, c, r, h]) => { cyl(r, r, h, x, 1.32 + h / 2, -1.55, c, 10); cyl(r * 0.5, r * 0.5, 0.04, x, 1.32 + h + 0.02, -1.55, 0x9a7a5a, 8); });
+cyl(0.02, 0.02, 0.34, -1.2, 1.34, -1.5, C.paper, 10, P, [Math.PI / 2, 0.3]);
+// a framed marbled sheet on the back wall, above the table (its texture is set once the sim runs, see marbleCanvas)
+box(0.5, 0.38, 0.03, -1.0, 1.75, -1.72, C.walnutDark, 0, W); box(0.44, 0.32, 0.035, -1.0, 1.75, -1.72, C.paper, 0, P, 0.02);
+const framedSheet = new THREE.Mesh(new THREE.PlaneGeometry(0.4, 0.28), new THREE.MeshLambertMaterial({ map: paperTexture() })); framedSheet.position.set(-1.0, 1.75, -1.70); scene.add(framedSheet);
+// a hanging calligraphy panel (levha) to the right of the window, and a hook with spare combs
+box(0.36, 0.5, 0.03, 1.45, 1.7, -1.72, C.walnutDark, 0, W); box(0.3, 0.44, 0.035, 1.45, 1.7, -1.72, 0xe4d6bd, 0, P, 0.02);
+[[-0.08, 0.02], [0.06, -0.12], [-0.02, 0.1], [0.1, 0.08]].forEach(([dx, dy]) => box(0.16, 0.012, 0.004, 1.45 + dx, 1.7 + dy, -1.70, C.ink, dx * 2.5, parts, 0.01)); // ink strokes
+[0.24, 0.16].forEach((len, i) => { box(len, 0.018, 0.02, 2.2 + i * 0.3, 1.5 - i * 0.18, -1.7, C.oak, 0.2, W); for (let k = 0; k < len / 0.02; k++) cyl(0.0015, 0.0015, 0.05, 2.2 + i * 0.3 - len / 2 + k * 0.02, 1.5 - i * 0.18 - 0.03, -1.7, 0xb9b9c4, 4); });
+// table: oak top with a walnut edge band, apron with a drawer and a brass knob, turned legs, stretchers
+box(1.7, 0.05, 1.15, 0, TABLE_Y - 0.025, 0, C.oak, 0, W, 0.08);
+box(1.74, 0.02, 1.19, 0, TABLE_Y - 0.006, 0, C.walnut, 0, W); // edge band
+box(1.7, 0.08, 0.05, 0, TABLE_Y - 0.09, 0.55, C.walnut, 0, W); box(1.7, 0.08, 0.05, 0, TABLE_Y - 0.09, -0.55, C.walnut, 0, W);
+box(0.05, 0.08, 1.1, -0.825, TABLE_Y - 0.09, 0, C.walnut, 0, W); box(0.05, 0.08, 1.1, 0.825, TABLE_Y - 0.09, 0, C.walnut, 0, W);
+box(0.5, 0.06, 0.02, 0.25, TABLE_Y - 0.09, 0.575, C.oakLight, 0, W); cyl(0.012, 0.012, 0.025, 0.25, TABLE_Y - 0.09, 0.59, C.brass, 10, parts, [Math.PI / 2, 0]); // drawer + knob
+[[-0.78, -0.5], [0.78, -0.5], [-0.78, 0.5], [0.78, 0.5]].forEach(([x, z]) => { box(0.07, TABLE_Y - 0.05, 0.07, x, (TABLE_Y - 0.05) / 2, z, C.walnut, 0, W, undefined, true); cyl(0.05, 0.04, 0.05, x, 0.4, z, C.walnut, 10, W); cyl(0.04, 0.05, 0.05, x, 0.2, z, C.walnut, 10, W); });
+box(1.5, 0.03, 0.03, 0, 0.12, 0.5, C.walnut, 0, W); box(1.5, 0.03, 0.03, 0, 0.12, -0.5, C.walnut, 0, W);
+// the tray (tekne): walnut rim with a lighter top strip and brass corner caps, zinc bottom
 const RW = TRAY_W + 0.08, RH = TRAY_H + 0.08, RT = 0.04, RTOP = TABLE_Y + 0.085;
-box(RW, 0.085, RT, 0, TABLE_Y + 0.0425, -RH / 2 + RT / 2, 0x4a3420); box(RW, 0.085, RT, 0, TABLE_Y + 0.0425, RH / 2 - RT / 2, 0x4a3420);
-box(RT, 0.085, RH, -RW / 2 + RT / 2, TABLE_Y + 0.0425, 0, 0x4a3420); box(RT, 0.085, RH, RW / 2 - RT / 2, TABLE_Y + 0.0425, 0, 0x4a3420);
-box(TRAY_W, 0.01, TRAY_H, 0, TABLE_Y + 0.01, 0, 0x6f6a5e);
-// pigment jars go on the table behind the tray (instanced); a cloth with the resting tools on the right
-box(0.3, 0.006, 0.9, 0.62, TABLE_Y + 0.003, 0.05, 0xe7dfcb, 0, parts, 0.04);
-cyl(0.009, 0.009, 0.24, 0.6, TABLE_Y + 0.016, 0.1, 0x7a4a26, 8, parts, [Math.PI / 2, 0.2]); cyl(0.013, 0.004, 0.06, 0.6, TABLE_Y + 0.016, 0.25, 0x2a2520, 8, parts, [Math.PI / 2, 0.2]);
-cyl(0.009, 0.009, 0.24, 0.68, TABLE_Y + 0.016, -0.1, 0x7a4a26, 8, parts, [Math.PI / 2, -0.15]); cyl(0.013, 0.004, 0.06, 0.68, TABLE_Y + 0.016, 0.05, 0x1E6FB8, 8, parts, [Math.PI / 2, -0.15]);
-cyl(0.0025, 0.0025, 0.14, 0.56, TABLE_Y + 0.01, -0.3, 0xb9b9c4, 6, parts, [Math.PI / 2, 0]); cyl(0.008, 0.008, 0.07, 0.56, TABLE_Y + 0.012, -0.2, 0x7a4a26, 8, parts, [Math.PI / 2, 0]);
-// paper stack on the left, a comb beside it
-for (let i = 0; i < 6; i++) box(0.42, 0.004, 0.32, -0.64 + (Math.random() - 0.5) * 0.01, TABLE_Y + 0.002 + i * 0.004, 0.2 + (Math.random() - 0.5) * 0.01, 0xece4d0, (Math.random() - 0.5) * 0.06, parts, 0.03);
-box(0.5, 0.025, 0.03, -0.62, TABLE_Y + 0.0125, -0.3, 0x7a4a26, 0.1);
-for (let i = 0; i < 20; i++) cyl(0.002, 0.002, 0.05, -0.62 - 0.24 + i * 0.0245 + Math.sin(0.1) * 0, TABLE_Y + 0.01, -0.3 + 0.03 + (i - 10) * 0.0245 * 0.1, 0xb9b9c4, 5, parts, [Math.PI / 2, 0.1]);
-// a stool and a bowl of water on the floor, a drying line with pins
-box(0.34, 0.03, 0.34, 1.35, 0.44, 0.9, 0x6b4a2e); [[-0.13, -0.13], [0.13, -0.13], [-0.13, 0.13], [0.13, 0.13]].forEach(([x, z]) => box(0.04, 0.43, 0.04, 1.35 + x, 0.215, 0.9 + z, 0x5a3b24));
-cyl(0.16, 0.12, 0.12, -1.3, 0.06, 0.6, 0x8a6a48, 14);
+box(RW, 0.085, RT, 0, TABLE_Y + 0.0425, -RH / 2 + RT / 2, C.walnutDark, 0, W); box(RW, 0.085, RT, 0, TABLE_Y + 0.0425, RH / 2 - RT / 2, C.walnutDark, 0, W);
+box(RT, 0.085, RH, -RW / 2 + RT / 2, TABLE_Y + 0.0425, 0, C.walnutDark, 0, W); box(RT, 0.085, RH, RW / 2 - RT / 2, TABLE_Y + 0.0425, 0, C.walnutDark, 0, W);
+box(RW, 0.006, RT, 0, RTOP + 0.003, -RH / 2 + RT / 2, C.oak, 0, W); box(RW, 0.006, RT, 0, RTOP + 0.003, RH / 2 - RT / 2, C.oak, 0, W);
+box(RT, 0.006, RH, -RW / 2 + RT / 2, RTOP + 0.003, 0, C.oak, 0, W); box(RT, 0.006, RH, RW / 2 - RT / 2, RTOP + 0.003, 0, C.oak, 0, W);
+[[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([a, b]) => cyl(0.014, 0.016, 0.006, a * (RW / 2 - RT / 2), RTOP + 0.009, b * (RH / 2 - RT / 2), 0x8f7226, 10, parts, undefined, false)); // brass corner nails
+box(TRAY_W, 0.01, TRAY_H, 0, TABLE_Y + 0.01, 0, C.zinc);
+// right of the tray: a cloth with the resting tools (awl, brush, a reed pen), a cup of rose-twig brushes
+box(0.3, 0.006, 0.9, 0.62, TABLE_Y + 0.003, 0.05, C.paper, 0, P, 0.04);
+cyl(0.009, 0.009, 0.24, 0.6, TABLE_Y + 0.016, 0.1, 0x7a4a26, 8, W, [Math.PI / 2, 0.2]); cyl(0.013, 0.004, 0.06, 0.6, TABLE_Y + 0.016, 0.25, C.ink, 8, parts, [Math.PI / 2, 0.2]);
+cyl(0.009, 0.009, 0.24, 0.68, TABLE_Y + 0.016, 0.32, 0x7a4a26, 8, W, [Math.PI / 2, -0.15]); cyl(0.013, 0.004, 0.06, 0.68, TABLE_Y + 0.016, 0.47, C.blue, 8, parts, [Math.PI / 2, -0.15]);
+cyl(0.0025, 0.0025, 0.14, 0.56, TABLE_Y + 0.01, -0.3, 0xb9b9c4, 6, parts, [Math.PI / 2, 0]); cyl(0.008, 0.008, 0.07, 0.56, TABLE_Y + 0.012, -0.2, 0x7a4a26, 8, W, [Math.PI / 2, 0]);
+cyl(0.004, 0.003, 0.16, 0.64, TABLE_Y + 0.008, 0.4, 0xb08a4a, 6, parts, [Math.PI / 2, 0.5]); // reed pen
+cyl(0.04, 0.034, 0.1, 0.79, TABLE_Y + 0.05, -0.14, 0x9a7a5a, 12); for (let i = 0; i < 5; i++) { const a = i / 5 * Math.PI * 2; cyl(0.004, 0.005, 0.22, 0.79 + Math.cos(a) * 0.02, TABLE_Y + 0.16, -0.14 + Math.sin(a) * 0.02, 0x7a4a26, 6, W, [Math.cos(a) * 0.2, Math.sin(a) * 0.2]); cyl(0.009, 0.003, 0.04, 0.79 + Math.cos(a) * 0.035, TABLE_Y + 0.28, -0.14 + Math.sin(a) * 0.035, C.ink, 6, parts); }
+// the oil lamp (kandil) at the back right, a bowl of ox-gall beside it, the muller and a pile of ground ochre
+cyl(0.045, 0.055, 0.015, 0.76, TABLE_Y + 0.0075, -0.47, C.brass, 12); cyl(0.012, 0.016, 0.12, 0.76, TABLE_Y + 0.075, -0.47, C.brass, 8); cyl(0.035, 0.02, 0.05, 0.76, TABLE_Y + 0.16, -0.47, C.brass, 10);
+cyl(0.03, 0.022, 0.07, 0.76, TABLE_Y + 0.22, -0.47, 0xfff0c8, 10); // the glass
+cyl(0.05, 0.035, 0.045, 0.66, TABLE_Y + 0.0225, -0.3, 0x3f6f78, 12); cyl(0.042, 0.042, 0.004, 0.66, TABLE_Y + 0.046, -0.3, 0x8a9a7a, 12);
+cyl(0.022, 0.03, 0.04, -0.76, TABLE_Y + 0.02, -0.5, 0x8a8a90, 12); cyl(0.012, 0.012, 0.05, -0.76, TABLE_Y + 0.06, -0.5, 0x8a8a90, 8); box(0.16, 0.012, 0.12, -0.78, TABLE_Y + 0.006, -0.5, 0x6f6a5e, 0.2, parts, 0.05); cyl(0.0001, 0.03, 0.02, -0.7, TABLE_Y + 0.02, -0.52, C.ochre, 10);
+// a small brass bowl of size (kitre) with a ladle, and a vase with one red tulip, both left of the jars
+cyl(0.07, 0.05, 0.05, -0.76, TABLE_Y + 0.025, -0.33, C.brass, 14); cyl(0.064, 0.064, 0.004, -0.76, TABLE_Y + 0.05, -0.33, 0xd9d2bd, 14);
+cyl(0.004, 0.004, 0.14, -0.72, TABLE_Y + 0.08, -0.33, C.walnut, 6, W, [0.9, 0.3]); cyl(0.02, 0.012, 0.012, -0.68, TABLE_Y + 0.05, -0.35, C.brass, 10);
+cyl(0.018, 0.012, 0.09, 0.62, TABLE_Y + 0.045, -0.5, 0x3f6f78, 10); cyl(0.004, 0.004, 0.14, 0.62, TABLE_Y + 0.14, -0.5, 0x4f7f4c, 5, parts, [0.1, 0]); cyl(0.0001, 0.018, 0.045, 0.63, TABLE_Y + 0.23, -0.5, C.ochre, 8);
+// paper stack on the left, a comb beside it, a bone folder
+for (let i = 0; i < 8; i++) box(0.42, 0.004, 0.32, -0.64 + (Math.random() - 0.5) * 0.012, TABLE_Y + 0.002 + i * 0.004, 0.2 + (Math.random() - 0.5) * 0.012, i === 7 ? C.paper : 0xe6dcc6, (Math.random() - 0.5) * 0.08, P, 0.03);
+box(0.5, 0.025, 0.03, -0.62, TABLE_Y + 0.0125, -0.3, 0x7a4a26, 0.1, W);
+for (let i = 0; i < 20; i++) cyl(0.002, 0.002, 0.05, -0.62 - 0.24 + i * 0.0245, TABLE_Y + 0.01, -0.3 + 0.03 + (i - 10) * 0.0245 * 0.1, 0xb9b9c4, 5, parts, [Math.PI / 2, 0.1]);
+box(0.12, 0.006, 0.02, -0.7, TABLE_Y + 0.036, 0.3, 0xe8dcc0, 0.4, parts, 0.02); // bone folder on the stack
+// a stool, a water bowl, a basket of scrap paper on the floor; the drying line with pins
+box(0.34, 0.03, 0.34, 1.35, 0.44, 0.9, C.walnut, 0, W); [[-0.13, -0.13], [0.13, -0.13], [-0.13, 0.13], [0.13, 0.13]].forEach(([x, z]) => box(0.04, 0.43, 0.04, 1.35 + x, 0.215, 0.9 + z, C.walnutDark, 0, W, undefined, true));
+cyl(0.16, 0.12, 0.12, -1.3, 0.06, 0.6, C.oak, 14, W);
+cyl(0.14, 0.11, 0.16, 1.5, 0.08, 0.2, 0xb08a4a, 12); for (let i = 0; i < 5; i++) box(0.16, 0.003, 0.12, 1.5 + (Math.random() - 0.5) * 0.06, 0.165 + i * 0.004, 0.2 + (Math.random() - 0.5) * 0.06, C.paper, Math.random() * 3, P, 0.03);
 const LINE_Z = -1.0, LINE_Y = 1.14;
 cyl(0.004, 0.004, 2.6, 0, LINE_Y, LINE_Z, 0x6a5a48, 5, parts, [Math.PI / 2, 0]);
-cyl(0.02, 0.02, LINE_Y + 0.1, -1.3, (LINE_Y + 0.1) / 2, LINE_Z, 0x5a3b24, 8); cyl(0.02, 0.02, LINE_Y + 0.1, 1.3, (LINE_Y + 0.1) / 2, LINE_Z, 0x5a3b24, 8);
-[-0.95, -0.4, 0.95].forEach(x => { box(0.02, 0.05, 0.015, x - 0.15, LINE_Y - 0.01, LINE_Z + 0.01, 0xc4a070); box(0.02, 0.05, 0.015, x + 0.15, LINE_Y - 0.01, LINE_Z + 0.01, 0xc4a070); });
+cyl(0.02, 0.02, LINE_Y + 0.1, -1.3, (LINE_Y + 0.1) / 2, LINE_Z, C.walnut, 8, W); cyl(0.02, 0.02, LINE_Y + 0.1, 1.3, (LINE_Y + 0.1) / 2, LINE_Z, C.walnut, 8, W);
+[-0.95, -0.4, 0.95].forEach(x => { box(0.02, 0.05, 0.015, x - 0.15, LINE_Y - 0.01, LINE_Z + 0.01, 0xc4a070, 0, W, undefined, true); box(0.02, 0.05, 0.015, x + 0.15, LINE_Y - 0.01, LINE_Z + 0.01, 0xc4a070, 0, W, undefined, true); });
 const statics = mergedMesh(parts, lambert); scene.add(statics);
+const woodStatics = mergedMesh(woodParts, woodMat); scene.add(woodStatics);
+const paperStatics = mergedMesh(paperParts, paperMat); scene.add(paperStatics);
 
 // pigment jars: InstancedMesh with per-instance colours
 const JAR_N = PAL.length;
@@ -1294,7 +1397,7 @@ const rippleTex = (() => {
   }
   x.putImageData(img, 0, 0); const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(4, 3); return t;
 })();
-const water = new THREE.Mesh(new THREE.PlaneGeometry(TRAY_W, TRAY_H), new THREE.MeshStandardMaterial({ map: paintRT.texture, roughness: 0.22, metalness: 0.0, normalMap: rippleTex, normalScale: new THREE.Vector2(0.07, 0.07), envMapIntensity: 1.1 }));
+const water = new THREE.Mesh(new THREE.PlaneGeometry(TRAY_W, TRAY_H), new THREE.MeshStandardMaterial({ map: paintRT.texture, roughness: 0.27, metalness: 0.0, normalMap: rippleTex, normalScale: new THREE.Vector2(0.07, 0.07), envMapIntensity: 1.0 }));
 water.rotation.x = -Math.PI / 2; water.position.set(0, TRAY_Y, 0); water.receiveShadow = true; scene.add(water);
 // transparent overlay above the water: hint ghost and tool cursor
 const ovCan = document.createElement('canvas'); ovCan.width = 512; ovCan.height = 384; const ovCtx = ovCan.getContext('2d', { willReadFrequently: true });
@@ -1304,13 +1407,7 @@ overlay.rotation.x = -Math.PI / 2; overlay.position.set(0, TRAY_Y + 0.0015, 0); 
 // invisible pick plane
 const pickPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -TRAY_Y);
 
-// paper: procedural cream texture with fibres, used for the laid sheet and the hanging ones
-function paperTexture(w = 256, h = 192) {
-  const c = document.createElement('canvas'); c.width = w; c.height = h; const x = c.getContext('2d');
-  x.fillStyle = '#efe6d2'; x.fillRect(0, 0, w, h);
-  for (let i = 0; i < 600; i++) { x.fillStyle = `rgba(120,90,50,${Math.random() * 0.12})`; x.fillRect(Math.random() * w, Math.random() * h, Math.random() * 6 + 1, 1); }
-  const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace; return tex;
-}
+// paper: see paperCanvas above (grain shared with the stack and the cloth)
 const paperTex = paperTexture();
 const sheet = new THREE.Mesh(new THREE.PlaneGeometry(TRAY_W, TRAY_H), new THREE.MeshLambertMaterial({ map: paperTex, side: THREE.DoubleSide }));
 sheet.rotation.x = -Math.PI / 2; sheet.castShadow = true; sheet.visible = false; scene.add(sheet);
@@ -1323,6 +1420,21 @@ function setHangingTexture(i, canvasOrImg) {
   const tex = new THREE.CanvasTexture(canvasOrImg); tex.colorSpace = THREE.SRGBColorSpace;
   const m = hanging[i]; if (m.material.map && m.material.map !== paperTex) m.material.map.dispose(); m.material.map = tex; m.material.needsUpdate = true;
 }
+// decorative marbled sheets (the framed one on the wall, the three on the line until the gallery fills them):
+// short recipes run through the same simulation and drawn on paper grain
+function marbleCanvas(strokes, w = 256, h = 192, alpha = 1, tone = '#e9e0cb') {
+  const sim = new Marble(); for (const s of strokes) runStroke(sim, s);
+  const c = paperCanvas(w, h, tone), x = c.getContext('2d'); x.globalAlpha = alpha; sim.draw(x, w / SW, PAL, false); x.globalAlpha = 1; return c;
+}
+const DECOR = (() => {
+  recipeRng = mulberry(4242); const a = marbleCanvas([BR(0, zig(4, 90, SH - 90)), BR(1, zig(4, 150, SH - 40, SW - 50, 50)), BIZ(zig(7, 60, SH - 60))]);
+  recipeRng = mulberry(777); const b = marbleCanvas([BR(11, zig(4, 90, SH - 90)), BR(2, zig(4, 150, SH - 40, SW - 50, 50)), BIZ(zig(7, 60, SH - 60)), TAR(line([512, 20], [512, SH - 20]))]);
+  recipeRng = mulberry(99); const c = marbleCanvas([BR(7, zig(4, 90, SH - 90)), BR(8, zig(4, 150, SH - 40, SW - 50, 50)), ...[[260, 220], [760, 220], [512, 540]].map(([x, y]) => BIZ(spiral(x, y, 150, 3)))]);
+  recipeRng = mulberry(31); const d = marbleCanvas([BR(1, zig(3, 120, SH - 120)), BR(2, zig(3, 200, SH - 60, SW - 50, 50)), BIZ(zig(6, 70, SH - 70)), BIG(0, 512, 384), BIZ(line([512, 500], [512, 180])), BIZ(line([440, 420], [455, 280])), BIZ(line([584, 420], [569, 280]))]);
+  return [a, b, c, d];
+})();
+{ const t = new THREE.CanvasTexture(DECOR[3]); t.colorSpace = THREE.SRGBColorSpace; framedSheet.material.map = t; framedSheet.material.needsUpdate = true; }
+DECOR.slice(0, 3).forEach((c, i) => setHangingTexture(i, c));
 
 // the active tool floats above the pointer
 const steel = new THREE.MeshStandardMaterial({ color: 0xc9c9d2, roughness: 0.35, metalness: 0.7 });
@@ -1357,7 +1469,7 @@ sun.shadow.camera.left = -1.1; sun.shadow.camera.right = 1.1; sun.shadow.camera.
 const hemi = new THREE.HemisphereLight(0xffe9cc, 0x4a3222, 0.85); scene.add(hemi);
 const fill = new THREE.DirectionalLight(0xa9bfe0, 0.4); fill.position.set(1.6, 1.4, 2.2); scene.add(fill);
 // the oil lamp (kandil) on the far right of the table: a small warm pool of light that flickers (see stepLamp)
-const lamp = new THREE.PointLight(0xffb060, 0.9, 1.6, 2); lamp.position.set(0.98, TABLE_Y + 0.26, -0.42); scene.add(lamp);
+const lamp = new THREE.PointLight(0xffb060, 0.9, 1.6, 2); lamp.position.set(0.76, TABLE_Y + 0.26, -0.47); scene.add(lamp);
 // Environment for the MeshStandard surfaces (water, steel, brass): a small canvas equirect of the room, a bright
 // window on a warm wall, run through PMREM once at boot. It gives the wet paint its sheen and the tools a glint.
 const envTex = (() => {
