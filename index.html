@@ -14,10 +14,16 @@
 <meta property="og:image:height" content="540">
 <meta name="twitter:card" content="summary_large_image">
 <style>
+/* Redesign (2026-11): ink & paper. Every panel is a sheet of light (hafif) ebru paper, the kind calligraphers wrote
+   on: a marbled ground from the game's own simulation under a cream wash, dark ink text, calligraphic serif headers
+   with an ink flourish, ebru-blue ink buttons, red wax seals, a walnut tool tray and a paper HUD strip. */
 :root{
-  --bg:#1a140e; --ink:#f3ead8; --ink2:#c9b89a; --accent:#1E6FB8; --accent2:#2f86d4; --gold:#d9a441; --green:#5f9a58; --red:#b5452c;
-  --glass:rgba(38,27,18,.66); --line:rgba(243,234,216,.14);
+  --paper:#f3ecdb; --paper2:#e8dec6; --ink:#2a2016; --ink2:#4f3f2e; --ink3:#6a5a44; --rule:rgba(42,32,22,.22);
+  --blue:#1E6FB8; --blue2:#185c99; --gold:#b8860b; --gold2:#d9a441; --green:#4f7f4c; --red:#b5452c; --wax:#9c3a24;
+  --walnut:#5a3b24; --walnut2:#3e2816; --brass:#c9a227;
+  --marble:none; --marble2:none; --wood:none; /* set from JS: data URLs drawn by the simulation and the wood canvas */
   --sa-t:env(safe-area-inset-top,0px); --sa-b:env(safe-area-inset-bottom,0px);
+  --bg:#1a140e;
 }
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--ink);
@@ -26,210 +32,234 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--
 #c{position:fixed;inset:0;width:100%;height:100%;display:block;outline:none;touch-action:none}
 [hidden]{display:none!important}
 button{font:inherit;color:inherit;cursor:pointer}
-:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
-.glass{background:var(--glass);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--line);
-  border-radius:16px;box-shadow:0 10px 32px rgba(0,0,0,.4)}
-.serif{font-family:Georgia,"Times New Roman",serif}
+:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+/* the sheet of paper: marbled ground, cream wash, a deckled shadow */
+.glass{background:linear-gradient(rgba(243,236,219,.84),rgba(243,236,219,.9)),var(--marble) center/cover,var(--paper);
+  border:1px solid rgba(42,32,22,.35);border-radius:6px;color:var(--ink);
+  box-shadow:0 1px 0 rgba(255,255,255,.5) inset,0 14px 36px rgba(0,0,0,.45),0 2px 6px rgba(0,0,0,.25)}
+.serif{font-family:Georgia,"Times New Roman","Noto Serif",serif}
 svg{display:block}
 i[data-icon]{display:inline-flex;width:24px;height:24px}
 i[data-icon] svg{width:100%;height:100%}
+/* calligraphic headers: italic serif with a thin ink flourish underneath */
+.panel h2,.title h1,.coach h3,.chc h3{font-family:Georgia,"Times New Roman","Noto Serif",serif;font-style:italic;font-weight:400;letter-spacing:.02em;color:var(--ink)}
+.flourish,.panel h2:not(.rhead h2),.title h1{position:relative;padding-bottom:10px}
+.panel h2:not(.rhead h2)::after,.title h1::after{content:"";position:absolute;left:50%;bottom:0;width:160px;height:8px;transform:translateX(-50%);
+  background:url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 8'%3E%3Cpath d='M2 5 C 30 1 50 1 80 4 S 130 7 158 3' fill='none' stroke='%232a2016' stroke-width='1.3' stroke-linecap='round' opacity='.75'/%3E%3Cpath d='M74 4 l3 -2.5 3 2.5 -3 2.5z' fill='%23b5452c'/%3E%3C/svg%3E") center/contain no-repeat}
+.panel h2:not(.rhead h2){text-align:center}
 
-/* top bar */
-.topbar{position:fixed;top:calc(8px + var(--sa-t));left:8px;right:8px;min-height:56px;display:flex;align-items:center;gap:8px;padding:4px 8px;z-index:20}
-.brand{display:flex;align-items:center;gap:8px;font-weight:700;color:var(--gold);white-space:nowrap}
+/* HUD: a strip of paper pinned at the top, a marbled band along its lower edge */
+.topbar{position:fixed;top:calc(8px + var(--sa-t));left:8px;right:8px;min-height:56px;display:flex;align-items:center;gap:8px;padding:4px 8px 7px;z-index:20;
+  border-radius:4px;overflow:hidden}
+.topbar::after{content:"";position:absolute;left:0;right:0;bottom:0;height:5px;background:var(--marble2) center/cover,var(--blue);opacity:.9}
+.brand{display:flex;align-items:center;gap:8px;font-weight:700;color:var(--ink);white-space:nowrap;font-family:Georgia,"Times New Roman",serif;font-style:italic}
 .brand svg{width:30px;height:30px}
-.brand span{font-size:19px;letter-spacing:.04em}
+.brand span{font-size:20px;letter-spacing:.04em}
 .stats{flex:1;display:flex;justify-content:center;align-items:center;gap:14px;flex-wrap:wrap;font-size:14px;color:var(--ink2);min-width:0}
 .stats b{color:var(--ink);font-weight:700;font-variant-numeric:tabular-nums}
-.stats .lsn{max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.stats .lsn{max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:Georgia,serif;font-style:italic;color:var(--ink)}
 .mwrap{display:flex;align-items:center;gap:6px}
-.mbar{display:inline-block;width:76px;height:8px;border-radius:4px;background:rgba(255,255,255,.12);overflow:hidden;position:relative}
-.mbar i{position:absolute;left:0;top:0;bottom:0;width:0;background:linear-gradient(90deg,var(--accent),var(--gold));transition:width .25s}
-.mbar em{position:absolute;left:80%;top:-2px;bottom:-2px;width:2px;background:#fff8}
-.mwrap.ok b{color:var(--gold)}
+.mbar{display:inline-block;width:76px;height:8px;border-radius:2px;background:rgba(42,32,22,.14);overflow:hidden;position:relative;border:1px solid var(--rule)}
+.mbar i{position:absolute;left:0;top:0;bottom:0;width:0;background:linear-gradient(90deg,var(--blue),#5fafb8);transition:width .25s}
+.mbar em{position:absolute;left:80%;top:-2px;bottom:-2px;width:2px;background:var(--ink)}
+.mwrap.ok b{color:var(--blue)}
 .acts{display:flex;gap:2px}
-.ibtn{width:44px;height:44px;border-radius:12px;border:1px solid transparent;background:transparent;display:inline-flex;align-items:center;
-  justify-content:center;color:var(--ink);font-weight:700;font-size:13px;position:relative;padding:0}
-.ibtn:hover{background:rgba(255,255,255,.08);border-color:var(--line)}
-.ibtn.on{background:rgba(30,111,184,.4);border-color:rgba(217,164,65,.5)}
+.ibtn{width:44px;height:44px;border-radius:6px;border:1px solid transparent;background:transparent;display:inline-flex;align-items:center;
+  justify-content:center;color:var(--ink);font-weight:700;font-size:13px;position:relative;padding:0;transition:background .15s,border-color .15s}
+.ibtn:hover{background:rgba(42,32,22,.08);border-color:var(--rule)}
+.ibtn.on{background:rgba(30,111,184,.16);border-color:var(--blue)}
 .ibtn:disabled{opacity:.35;cursor:default}
 .ibtn i[data-icon]{width:24px;height:24px}
-.ibtn.pulse{animation:pulse 1s ease-in-out infinite;border-color:var(--gold)}
-@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(217,164,65,.0)}50%{box-shadow:0 0 0 5px rgba(217,164,65,.45)}}
+.ibtn.pulse{animation:pulse 1s ease-in-out infinite;border-color:var(--blue)}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(30,111,184,0)}50%{box-shadow:0 0 0 5px rgba(30,111,184,.4)}}
 .stars{display:inline-flex;gap:2px;vertical-align:middle}
 .stars svg{width:18px;height:18px}
-.stars svg,.bigstars svg{fill:transparent;stroke:rgba(255,255,255,.4);stroke-width:1.5}
-.stars svg.on,.bigstars svg.on{fill:var(--gold);stroke:var(--gold)}
+.stars svg,.bigstars svg{fill:transparent;stroke:rgba(42,32,22,.4);stroke-width:1.5}
+.stars svg.on,.bigstars svg.on{fill:var(--gold2);stroke:var(--gold)}
 @media (max-width:760px){
-  .topbar{flex-wrap:wrap;padding:4px 6px}
+  .topbar{flex-wrap:wrap;padding:4px 6px 8px}
   .brand span{display:none}
-  .stats{gap:10px;font-size:13px;order:3;flex-basis:100%;justify-content:space-around;padding-bottom:4px}
+  .stats{gap:10px;font-size:13px;order:3;flex-basis:100%;justify-content:space-around;padding-bottom:2px}
   .stats .lsn{display:none}
   .acts{margin-left:auto}
   .mbar{width:48px}
 }
 
-/* target preview */
-.preview{position:fixed;right:10px;top:calc(76px + var(--sa-t));width:min(28vw,220px);padding:6px;z-index:17;pointer-events:none}
-.preview span{display:block;font-size:11px;color:var(--ink2);margin:0 0 4px 2px}
-.preview canvas{display:block;width:100%;height:auto;border-radius:8px}
-@media (max-width:760px){.preview{top:calc(112px + var(--sa-t));width:30vw}}
+/* target preview: a small sheet in a walnut frame with a paper mat */
+.preview{position:fixed;right:10px;top:calc(76px + var(--sa-t));width:min(28vw,220px);padding:8px;z-index:17;pointer-events:none;
+  background:linear-gradient(rgba(92,58,30,.72),rgba(58,36,18,.8)),var(--wood) center/180px,var(--walnut);border:1px solid var(--walnut2);border-radius:3px;box-shadow:0 8px 22px rgba(0,0,0,.45),0 0 0 2px rgba(0,0,0,.2) inset}
+.preview span{display:block;font-size:11px;color:var(--paper);margin:0 0 5px 2px;font-family:Georgia,serif;font-style:italic;letter-spacing:.04em}
+.preview canvas{display:block;width:100%;height:auto;border-radius:1px;box-shadow:0 0 0 4px var(--paper),0 0 0 5px rgba(0,0,0,.3)}
+@media (max-width:760px){.preview{top:calc(112px + var(--sa-t));width:30vw;padding:6px}.preview canvas{box-shadow:0 0 0 3px var(--paper),0 0 0 4px rgba(0,0,0,.3)}}
 
-/* tool tray */
-.tray{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(8px + var(--sa-b));display:flex;align-items:center;gap:8px;padding:6px 8px;z-index:20;
-  max-width:calc(100vw - 16px);flex-wrap:wrap;justify-content:center}
+/* tool tray: a walnut box with paper labels and pigment dabs */
+.tray{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(8px + var(--sa-b));display:flex;align-items:center;gap:8px;padding:8px 10px;z-index:20;
+  max-width:calc(100vw - 16px);flex-wrap:wrap;justify-content:center;
+  background:linear-gradient(rgba(92,58,30,.72),rgba(58,36,18,.8)),var(--wood) center/220px,var(--walnut);border:1px solid var(--walnut2);border-radius:5px;color:var(--paper);
+  box-shadow:0 1px 0 rgba(255,255,255,.12) inset,0 -3px 0 rgba(0,0,0,.25) inset,0 12px 30px rgba(0,0,0,.5)}
 .tray .grp{display:flex;gap:4px;align-items:center;flex-wrap:wrap;justify-content:center}
-.tray .sep{width:1px;align-self:stretch;background:var(--line)}
-.tbtn{min-width:52px;height:56px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.05);padding:2px 4px;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;position:relative}
+.tray .sep{width:1px;align-self:stretch;background:rgba(0,0,0,.35);box-shadow:1px 0 0 rgba(255,255,255,.08)}
+.tbtn{min-width:52px;height:56px;border-radius:4px;border:1px solid rgba(0,0,0,.4);background:linear-gradient(rgba(243,236,219,.92),rgba(232,222,198,.95)),var(--marble) center/cover;padding:2px 4px;color:var(--ink);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;position:relative;box-shadow:0 1px 0 rgba(255,255,255,.1) inset,0 2px 3px rgba(0,0,0,.3);transition:transform .15s,box-shadow .15s}
 .tbtn i[data-icon]{width:30px;height:30px}
-.tbtn small{position:absolute;top:2px;left:5px;font-size:10px;color:var(--ink2)}
-.tbtn.sel{border-color:var(--gold);background:rgba(217,164,65,.18);box-shadow:0 0 0 1px var(--gold) inset}
-.tbtn:disabled{opacity:.3;cursor:default}
-.tbtn.pulse{animation:pulse 1s ease-in-out infinite;border-color:var(--gold)}
-.sw{width:44px;height:44px;border-radius:50%;border:3px solid rgba(255,255,255,.18);padding:0;position:relative;box-shadow:inset 0 -4px 8px rgba(0,0,0,.25)}
-.sw.sel{border-color:var(--gold);box-shadow:0 0 0 2px var(--gold),inset 0 -4px 8px rgba(0,0,0,.25)}
+.tbtn small{position:absolute;top:2px;left:5px;font-size:10px;color:var(--ink3);font-family:Georgia,serif}
+.tbtn:hover{transform:translateY(-1px)}
+.tbtn.sel{border-color:var(--blue);box-shadow:0 0 0 2px var(--blue) inset,0 2px 3px rgba(0,0,0,.3);color:var(--blue2)}
+.tbtn:disabled{opacity:.3;cursor:default;transform:none}
+.tbtn.pulse{animation:pulse 1s ease-in-out infinite;border-color:var(--gold2)}
+.sw{width:44px;height:44px;border-radius:50%;border:2px solid rgba(0,0,0,.45);padding:0;position:relative;
+  box-shadow:inset 0 -5px 8px rgba(0,0,0,.35),inset 0 3px 4px rgba(255,255,255,.25),0 2px 3px rgba(0,0,0,.4);transition:transform .15s}
+.sw::after{content:"";position:absolute;left:22%;top:14%;width:28%;height:18%;border-radius:50%;background:rgba(255,255,255,.55);filter:blur(1px)} /* wet highlight */
+.sw:hover{transform:scale(1.06)}
+.sw.sel{border-color:var(--paper);box-shadow:0 0 0 2px var(--blue),inset 0 -5px 8px rgba(0,0,0,.35),inset 0 3px 4px rgba(255,255,255,.25)}
 .sw.pulse{animation:pulse 1s ease-in-out infinite}
-.sw:disabled{opacity:.25;cursor:default}
-.cbtn{width:46px;height:46px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.07);display:inline-flex;align-items:center;justify-content:center;padding:0}
-.cbtn:hover{background:rgba(255,255,255,.14)}
+.sw:disabled{opacity:.25;cursor:default;transform:none}
+.cbtn{width:46px;height:46px;border-radius:4px;border:1px solid rgba(0,0,0,.4);background:rgba(243,236,219,.9);color:var(--ink);display:inline-flex;align-items:center;justify-content:center;padding:0}
+.cbtn:hover{background:var(--paper)}
 .cbtn i[data-icon]{width:22px;height:22px}
 .cbtn:disabled{opacity:.3;cursor:default}
-.lay{min-height:56px;padding:0 16px;border-radius:12px;border:1px solid rgba(217,164,65,.45);background:var(--accent);color:#fff;font-weight:700;
-  display:inline-flex;align-items:center;gap:8px;font-size:15px}
-.lay:hover{background:var(--accent2)}
+.cbtn.pulse{animation:pulse 1s ease-in-out infinite;border-color:var(--gold2)}
+.lay{min-height:56px;padding:0 18px;border-radius:4px;border:1px solid rgba(0,0,0,.45);background:linear-gradient(var(--blue),var(--blue2));color:#fff;font-weight:700;
+  display:inline-flex;align-items:center;gap:8px;font-size:15px;box-shadow:0 1px 0 rgba(255,255,255,.25) inset,0 2px 4px rgba(0,0,0,.4);transition:transform .15s,filter .15s}
+.lay:hover{filter:brightness(1.1);transform:translateY(-1px)}
 .lay i[data-icon]{width:22px;height:22px}
-@media (max-width:760px){.tbtn{min-width:46px;height:50px}.tbtn i[data-icon]{width:26px;height:26px}.sw{width:40px;height:40px}.lay{min-height:50px;padding:0 12px;font-size:14px}.lay span{display:none}}
+.lay.pulse{animation:pulse 1s ease-in-out infinite}
+.tray .seg{align-self:center;border-color:rgba(0,0,0,.45);background:rgba(243,236,219,.9)}
+.tray .seg button{min-width:48px;min-height:46px;padding:0 10px;font-size:13px;background:transparent;color:var(--ink)}
+.tray .seg button.on{background:var(--blue);color:#fff}
+@media (max-width:760px){.tray{left:8px;right:8px;transform:none;max-width:none;padding:6px 6px;gap:6px}.tray .grp{gap:3px}.tray .sep{display:none}#swatches{order:3;flex-basis:100%;justify-content:center}.tbtn{min-width:46px;height:50px}.tbtn i[data-icon]{width:26px;height:26px}.sw{width:44px;height:44px}.lay{min-height:50px;padding:0 12px;font-size:14px}.lay span{display:none}}
 
-/* toasts */
+/* toasts: paper slips */
 .toasts{position:fixed;top:calc(76px + var(--sa-t));left:50%;transform:translateX(-50%);display:flex;flex-direction:column;gap:6px;
   align-items:center;z-index:25;pointer-events:none;width:max-content;max-width:92vw}
 @media (max-width:760px){.toasts{top:calc(120px + var(--sa-t))}}
-.toast{padding:8px 16px;border-radius:12px;font-weight:600;font-size:14.5px;animation:tin .25s ease-out;border-left:4px solid var(--gold)}
+.toast{padding:8px 16px;border-radius:3px;font-weight:600;font-size:14.5px;animation:tin .25s ease-out;border-left:4px solid var(--blue)}
 .toast.good{border-left-color:var(--green)} .toast.bad{border-left-color:var(--red)}
 .toast.out{opacity:0;transform:translateY(-6px);transition:all .3s}
 @keyframes tin{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
 
-/* overlays */
-.overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(14,10,6,.5);
-  backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);z-index:30;padding:12px;overflow:auto}
+/* overlays and panels */
+.overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(20,14,8,.5);
+  backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);z-index:30;padding:12px;overflow:auto}
 .overlay.clear{background:rgba(14,10,6,.2);backdrop-filter:none;-webkit-backdrop-filter:none}
 .panel{padding:22px 24px;width:min(94vw,470px);max-height:calc(100vh - 24px);overflow:auto}
 .panel.wide{width:min(96vw,780px)}
-.panel h2{margin:0 0 12px;font-size:24px;color:var(--gold)}
+.panel h2{margin:0 0 12px;font-size:26px}
 .col{display:flex;flex-direction:column;gap:10px}
 .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .row.end{justify-content:flex-end}
-.btn{min-height:46px;padding:0 18px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.08);color:var(--ink);
-  font-weight:700;font-size:16px;display:inline-flex;align-items:center;justify-content:center;gap:8px}
-.btn:hover{background:rgba(255,255,255,.14)}
-.btn.primary{background:var(--accent);border-color:rgba(217,164,65,.45);color:#fff}
-.btn.primary:hover{background:var(--accent2)}
-.btn:disabled{opacity:.45;cursor:default}
+.btn{min-height:46px;padding:0 18px;border-radius:4px;border:1.5px solid var(--ink);background:rgba(255,255,255,.35);color:var(--ink);
+  font-weight:700;font-size:16px;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:background .15s,transform .15s,box-shadow .15s;box-shadow:0 1px 2px rgba(0,0,0,.15)}
+.btn:hover{background:rgba(42,32,22,.1);transform:translateY(-1px)}
+.btn.primary{background:linear-gradient(var(--blue),var(--blue2));border-color:var(--blue2);color:#fff;box-shadow:0 1px 0 rgba(255,255,255,.25) inset,0 2px 4px rgba(0,0,0,.3)}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn:disabled{opacity:.45;cursor:default;transform:none}
 .btn.w{width:100%}
 .btn i[data-icon]{width:20px;height:20px}
 label.sl{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--ink2)}
 label.sl span{width:96px}
-input[type=range]{flex:1;accent-color:var(--accent);height:44px;margin:0}
-.seg{display:inline-flex;border:1px solid var(--line);border-radius:12px;overflow:hidden}
-.seg button{min-height:44px;min-width:64px;padding:0 14px;border:0;background:transparent;font-weight:600}
-.seg button.on{background:var(--accent);color:#fff}
+input[type=range]{flex:1;accent-color:var(--blue);height:44px;margin:0}
+.seg{display:inline-flex;border:1.5px solid var(--ink);border-radius:4px;overflow:hidden;background:rgba(255,255,255,.3)}
+.seg button{min-height:44px;min-width:64px;padding:0 14px;border:0;background:transparent;font-weight:600;color:var(--ink)}
+.seg button.on{background:var(--blue);color:#fff}
 .lbl{width:96px;font-size:14px;color:var(--ink2)}
-.footer{margin-top:14px;font-size:12px;color:var(--ink2);text-align:center}
-.footer a{color:var(--gold);text-decoration:none}
+.footer{margin-top:14px;font-size:12px;color:var(--ink2);text-align:center;border-top:1px solid var(--rule);padding-top:10px}
+.footer a{color:var(--blue2);text-decoration:none}
 .footer a:hover{text-decoration:underline}
 
 /* title */
 .title{text-align:center;width:min(94vw,520px)}
-.title .logo{width:120px;height:120px;margin:0 auto 2px}
+.title .logo{width:120px;height:120px;margin:0 auto 2px;filter:drop-shadow(0 6px 10px rgba(0,0,0,.35))}
 .title .logo svg{width:100%;height:100%}
-.title h1{margin:0;font-size:54px;color:var(--gold);letter-spacing:.06em;line-height:1.05}
-.title .sub{margin:4px 0 10px;color:var(--ink);font-size:15px}
-.title .how{font-size:13px;color:var(--ink2);margin:0 0 12px;line-height:1.45}
+.title h1{margin:0 auto 6px;font-size:58px;letter-spacing:.08em;line-height:1.05;width:max-content}
+.title .sub{margin:4px 0 10px;color:var(--ink);font-size:15px;font-family:Georgia,serif;font-style:italic}
+.title .how{font-size:13.5px;color:var(--ink2);margin:0 0 12px;line-height:1.45}
 .title .best{font-size:14px;margin:12px 0 0;color:var(--ink)}
 #loadmsg{color:var(--ink2);font-size:14px;margin:6px 0}
 
-/* chapter map */
+/* chapter map: three pages of a lesson book */
 .chcards{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
 @media (max-width:720px){.chcards{grid-template-columns:1fr}}
-.chc{border:1px solid var(--line);border-radius:14px;padding:10px 12px;background:rgba(255,255,255,.04)}
-.chc h3{margin:0;font-size:16px;color:var(--gold)}
-.chc p{margin:2px 0 8px;font-size:12px;color:var(--ink2);line-height:1.35;min-height:32px}
+.chc{border:1px solid var(--rule);border-radius:4px;padding:10px 12px;background:rgba(255,255,255,.3);position:relative;overflow:hidden}
+.chc::before{content:"";position:absolute;left:0;right:0;top:0;height:4px;background:var(--marble2) center/cover,var(--blue);opacity:.85}
+.chc h3{margin:4px 0 0;font-size:17px}
+.chc p{margin:2px 0 8px;font-size:13px;color:var(--ink2);line-height:1.35;min-height:32px}
 .chc.locked{opacity:.5}
 .lsn6{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
-.lsn6 button{min-height:62px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.06);font-weight:700;font-size:12px;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:4px 2px;line-height:1.1}
+.lsn6 button{min-height:62px;border-radius:3px;border:1px solid var(--rule);background:rgba(255,255,255,.4);font-weight:700;font-size:12.5px;color:var(--ink);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:4px 2px;line-height:1.1;position:relative;transition:background .15s}
+.lsn6 button:hover:not(:disabled){background:rgba(255,255,255,.7)}
 .lsn6 button .stars svg{width:10px;height:10px}
 .lsn6 button:disabled{opacity:.4;cursor:default}
-.lsn6 button.done{border-color:var(--green)}
-.lsn6 button.next{border-color:var(--gold);background:rgba(217,164,65,.15)}
-.lsn6 button small{font-size:10px;color:var(--ink2);font-weight:400}
+.lsn6 button.done{border-color:var(--green);box-shadow:0 0 0 1px var(--green) inset}
+.lsn6 button.next{border-color:var(--blue);background:rgba(30,111,184,.12);box-shadow:0 0 0 1px var(--blue) inset}
+.lsn6 button small{font-size:10px;color:var(--ink3);font-weight:400;font-family:Georgia,serif}
 
 /* lesson intro, result */
 .two{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start}
-@media (max-width:640px){.two{grid-template-columns:1fr}}
-.sheetimg{width:100%;aspect-ratio:4/3;border-radius:10px;background:#e9e2cf;display:block;box-shadow:0 6px 18px rgba(0,0,0,.45)}
-.cap{font-size:12px;color:var(--ink2);margin:4px 0 0;text-align:center}
-.note{background:rgba(255,255,255,.06);border-left:3px solid var(--gold);padding:8px 12px;border-radius:0 10px 10px 0;font-size:14px;line-height:1.4}
-.note b{color:var(--gold)}
+@media (max-width:420px){.two{grid-template-columns:1fr}}
+.sheetimg{width:100%;aspect-ratio:4/3;border-radius:2px;background:#e9e2cf;display:block;box-shadow:0 0 0 5px var(--paper),0 0 0 6px rgba(42,32,22,.35),0 8px 18px rgba(0,0,0,.35)}
+.cap{font-size:13px;color:var(--ink2);margin:10px 0 0;text-align:center;font-family:Georgia,serif;font-style:italic}
+.note{background:rgba(255,255,255,.35);border-left:3px solid var(--red);padding:8px 12px;border-radius:0 3px 3px 0;font-size:14px;line-height:1.4}
+.note b{color:var(--red)}
 .chips{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
-.chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--ink2);padding:4px 8px;border-radius:999px;background:rgba(255,255,255,.07)}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--ink2);padding:4px 8px;border-radius:999px;background:rgba(255,255,255,.4);border:1px solid var(--rule)}
 .chip i[data-icon]{width:16px;height:16px}
-.dot{width:14px;height:14px;border-radius:50%;display:inline-block;border:1px solid rgba(255,255,255,.3)}
-.rhead{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
-.rhead h2{margin:0;font-size:22px}
+.dot{width:14px;height:14px;border-radius:50%;display:inline-block;border:1px solid rgba(0,0,0,.3)}
+.rhead{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;border-bottom:1px solid var(--rule);padding-bottom:8px;margin-bottom:10px}
+.rhead h2{margin:0;font-size:24px}
 .bigstars{display:flex;gap:6px}
 .bigstars svg{width:30px;height:30px}
 .kv{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:10px 0}
-.kv div{padding:10px;border-radius:12px;background:rgba(255,255,255,.06);text-align:center}
-.kv b{display:block;font-size:22px;color:var(--gold)}
+.kv div{padding:10px;border-radius:3px;background:rgba(255,255,255,.35);text-align:center;border:1px solid var(--rule)}
+.kv b{display:block;font-size:24px;color:var(--blue2);font-family:Georgia,serif}
 .kv span{font-size:12px;color:var(--ink2)}
 .rec{color:var(--green);font-weight:700;text-align:center;margin:4px 0}
-.galgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-@media (max-width:640px){.galgrid{grid-template-columns:repeat(3,1fr)}}
-.galgrid figure{margin:0;position:relative}
-.galgrid img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:8px;display:block;background:#e9e2cf}
-.galgrid button{position:absolute;right:4px;top:4px;width:30px;height:30px;border-radius:8px;border:0;background:rgba(0,0,0,.55);color:#fff;display:flex;align-items:center;justify-content:center;padding:0}
+.galgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+@media (max-width:640px){.galgrid{grid-template-columns:repeat(2,1fr)}.galgrid button{width:44px;height:44px}}
+.galgrid figure{margin:0;position:relative;padding:4px 4px 10px;background:#fbf7ee;box-shadow:0 2px 6px rgba(0,0,0,.3);transform:rotate(-.6deg)}
+.galgrid figure:nth-child(2n){transform:rotate(.7deg)}
+.galgrid img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:1px;display:block;background:#e9e2cf}
+.galgrid button{position:absolute;right:8px;top:8px;width:34px;height:34px;border-radius:3px;border:0;background:rgba(42,32,22,.7);color:#fff;display:flex;align-items:center;justify-content:center;padding:0}
 .galgrid button i[data-icon]{width:16px;height:16px}
 .empty{color:var(--ink2);font-size:14px;text-align:center;padding:20px 0}
 
-/* v2: coach card (the master's note, in play), live critique, rim glow, seals, thickness, book covers, mascot */
+/* v2 elements: coach card, live critique, rim glow, seals, thickness, book covers, mascot */
 .coach{position:fixed;left:10px;top:calc(76px + var(--sa-t));width:min(36vw,340px);padding:12px 14px;z-index:18;transition:opacity .45s,transform .45s}
 .coach.out{opacity:0;transform:translateY(-8px);pointer-events:none}
-.coach h3{margin:0 0 6px;font-size:17px;color:var(--gold)}
+.coach h3{margin:0 0 6px;font-size:18px;border-bottom:1px solid var(--rule);padding-bottom:4px}
 .coach .note{font-size:13px;margin-bottom:8px}
 .coach .chips{margin-bottom:8px}
-.coach .tip{font-size:12px;color:var(--ink2);margin:0 0 8px;line-height:1.35}
+.coach .tip{font-size:13px;color:var(--ink2);margin:0 0 8px;line-height:1.35}
 .coach .btn{min-height:44px;font-size:14px;padding:0 14px}
 @media (max-width:760px){.coach{left:8px;right:calc(30vw + 18px);width:auto;top:calc(120px + var(--sa-t));max-height:40vh;overflow:auto;padding:10px 12px}.coach .chips{display:none}}
-.crit{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + var(--sa-b));padding:6px 14px;border-radius:999px;font-size:13.5px;font-weight:600;
+.crit{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + var(--sa-b));padding:7px 14px;border-radius:3px;font-size:13.5px;font-weight:600;
   z-index:19;pointer-events:none;max-width:92vw;text-align:center;border-left:4px solid var(--red);transition:opacity .3s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .crit.good{border-left-color:var(--green)}
 .crit[hidden]{display:none}
-@media (max-width:760px){.crit{bottom:calc(118px + var(--sa-b));font-size:12.5px}}
+@media (max-width:760px){.crit{bottom:calc(118px + var(--sa-b));font-size:13.5px}}
 .rim{position:fixed;inset:0;pointer-events:none;z-index:15;opacity:0;box-shadow:inset 0 0 90px 10px rgba(217,164,65,.55);transition:opacity .35s}
 .rim.on{opacity:1}
-.seal{display:inline-flex;width:22px;height:22px;vertical-align:middle}
+.seal{display:inline-flex;width:22px;height:22px;vertical-align:middle;filter:drop-shadow(0 1px 1px rgba(0,0,0,.3))}
 .seal svg{width:100%;height:100%}
 .lsn6 button .seal{position:absolute;right:3px;top:3px;width:16px;height:16px}
-.lsn6 button{position:relative}
 .rankline{font-size:14px;margin:8px 0 0;color:var(--ink);display:flex;align-items:center;justify-content:center;gap:6px}
-.fact{font-size:12.5px;color:var(--ink2);line-height:1.4;margin:10px 0 0;padding:8px 10px;border-radius:10px;background:rgba(255,255,255,.05)}
-.fact b{color:var(--gold)}
-.tray .seg button{min-width:48px;min-height:46px;padding:0 10px;font-size:13px;background:rgba(255,255,255,.06);color:var(--ink)}
-.tray .seg button.on{background:var(--accent);color:#fff}
-.tray .seg{align-self:center}
+.fact{font-size:13px;color:var(--ink2);line-height:1.4;margin:10px 0 0;padding:8px 10px;border-radius:3px;background:rgba(255,255,255,.3);border:1px dashed var(--rule)}
+.fact b{color:var(--red)}
 #result .two{max-width:620px;margin:0 auto}
 #result .kv{margin:8px 0}
-.sealchip{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--ink);padding:6px 10px;border-radius:999px;background:rgba(181,69,44,.18);border:1px solid rgba(181,69,44,.5)}
-.sealchip.off{opacity:.65;background:rgba(255,255,255,.05);border-color:var(--line)}
+.sealchip{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--ink);padding:6px 10px;border-radius:999px;background:rgba(181,69,44,.12);border:1px solid rgba(181,69,44,.6)}
+.sealchip.off{opacity:.7;background:rgba(255,255,255,.3);border-color:var(--rule)}
+.sealchip:not(.off) .seal{width:30px;height:30px;animation:stamp .5s cubic-bezier(.2,1.4,.4,1) both}
+@keyframes stamp{from{transform:scale(2.2) rotate(-18deg);opacity:0}60%{opacity:1}to{transform:none;opacity:1}}
 .rhead img.cat{width:72px;height:72px;object-fit:contain;margin-left:auto}
-.galgrid button.bind{right:auto;left:4px;background:rgba(181,69,44,.75)}
-.galgrid button.bind.on{background:var(--red)}
+.galgrid button.bind{right:auto;left:8px;background:rgba(156,58,36,.8)}
+.galgrid button.bind.on{background:var(--wax)}
 .title .logo.cat{width:96px;height:96px}
 #dbg{position:fixed;left:8px;bottom:calc(8px + var(--sa-b));font:12px/1.4 ui-monospace,Consolas,monospace;color:#9f9;background:rgba(0,0,0,.65);
   padding:6px 8px;white-space:pre;pointer-events:none;z-index:60;border-radius:6px;max-width:92vw;overflow:hidden}
 #dbg .err{color:#f66}
+@media (prefers-reduced-motion:reduce){.sealchip:not(.off) .seal,.pulse{animation:none}}
 </style>
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}
@@ -415,7 +445,7 @@ window.EBRU_FACTS = [
 ];
 (function () {
   const q = new URLSearchParams(location.search).get('lang');
-  const tr = q ? q === 'tr' : !/^en/i.test(navigator.language || '');
+  const tr = q ? q === 'tr' : /^tr/i.test(navigator.language || '');
   document.getElementById('loadmsg').textContent = tr ? 'Yükleniyor… 0/18' : 'Loading… 0/18';
   const f = window.EBRU_FACTS[Math.floor(Date.now() / 60000) % window.EBRU_FACTS.length];
   document.getElementById('factLine').innerHTML = '<b>' + (tr ? 'Biliyor muydun?' : 'Did you know?') + '</b> ' + (tr ? f.tr : f.en);
@@ -1131,82 +1161,194 @@ const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPrefere
 renderer.setPixelRatio(Math.min(devicePixelRatio || 1, SET.quality === 'low' ? 1 : 1.5));
 renderer.shadowMap.enabled = SET.quality !== 'low'; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
-const scene = new THREE.Scene(); scene.background = new THREE.Color(0x1a140e);
+// Redesign (2026-11) palette: ink & paper fine art. Walnut wood, cream paper, lime plaster, ebru blue, red ochre wax,
+// brass, zinc. Every mesh colour below comes from this table so the room reads as one material family.
+const C = { walnut: 0x5a3b24, walnutDark: 0x3e2816, oak: 0x8a6240, oakLight: 0xa57a4e, plaster: 0xd8c7a8, plasterDark: 0xb49b78,
+  paper: 0xefe6d2, blue: 0x1E6FB8, ochre: 0xB5452C, brass: 0xc9a227, zinc: 0x7d8178, kilimRed: 0x8a3a2a, kilimBlue: 0x2c4a8a, ink: 0x2a2520, shade: 0x2a1d12 };
+const scene = new THREE.Scene(); scene.background = new THREE.Color(C.shade);
+// a little warm haze towards the far wall: the window light reads as air, not as a flat backdrop
+scene.fog = new THREE.Fog(0x4a3626, 3.2, 8.5);
 const camera = new THREE.PerspectiveCamera(42, 1, 0.05, 30);
 const TRAY_W = 0.8, TRAY_H = 0.6, TRAY_Y = 0.80, TABLE_Y = 0.745;
 const trayCentre = new THREE.Vector3(0, TRAY_Y, 0);
 
-const parts = [];
+// ---- Canvas textures for the room (redesign 2026-11): wood grain, lime plaster, laid paper, kilim, window view ----
+function noiseCanvas(w, h, fn) { const c = document.createElement('canvas'); c.width = w; c.height = h; const x = c.getContext('2d'); fn(x, w, h); return c; }
+function texOf(can, repeat = 1) { const t = new THREE.CanvasTexture(can); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(repeat, repeat); t.anisotropy = Math.min(4, renderer.capabilities.getMaxAnisotropy()); return t; }
+// wood: long streaks with a slow wobble, a few darker knots; multiplied by the vertex colour, so it is drawn near white
+const woodTex = texOf(noiseCanvas(256, 256, (x, w, h) => {
+  x.fillStyle = '#d9c5a5'; x.fillRect(0, 0, w, h);
+  for (let i = 0; i < 420; i++) {
+    const y = Math.random() * h, len = 40 + Math.random() * 200, a = 0.05 + Math.random() * 0.14;
+    x.strokeStyle = `rgba(${Math.random() < 0.5 ? '90,55,25' : '160,120,80'},${a})`; x.lineWidth = 0.6 + Math.random() * 1.6;
+    x.beginPath(); const x0 = Math.random() * w; x.moveTo(x0, y);
+    for (let s = 1; s <= 6; s++) x.lineTo(x0 + len * s / 6, y + Math.sin(s * 1.3 + x0) * 2.2); x.stroke();
+  }
+  for (let i = 0; i < 4; i++) { const kx = Math.random() * w, ky = Math.random() * h; const g = x.createRadialGradient(kx, ky, 1, kx, ky, 12 + Math.random() * 10); g.addColorStop(0, 'rgba(70,40,15,.45)'); g.addColorStop(0.5, 'rgba(110,70,30,.2)'); g.addColorStop(1, 'rgba(110,70,30,0)'); x.fillStyle = g; x.fillRect(kx - 30, ky - 30, 60, 60); }
+}), 1);
+// lime plaster: soft mottle, a few hairline cracks, trowel marks
+const plasterTex = texOf(noiseCanvas(256, 256, (x, w, h) => {
+  x.fillStyle = '#e4d6bd'; x.fillRect(0, 0, w, h);
+  for (let i = 0; i < 1400; i++) { x.fillStyle = `rgba(${Math.random() < 0.5 ? '120,95,60' : '255,250,235'},${Math.random() * 0.12})`; const r = 2 + Math.random() * 9; x.beginPath(); x.arc(Math.random() * w, Math.random() * h, r, 0, 7); x.fill(); }
+  for (let i = 0; i < 30; i++) { x.strokeStyle = `rgba(255,255,245,${0.05 + Math.random() * 0.08})`; x.lineWidth = 6 + Math.random() * 10; x.beginPath(); const sx = Math.random() * w, sy = Math.random() * h; x.moveTo(sx, sy); x.quadraticCurveTo(sx + 40, sy + (Math.random() - 0.5) * 60, sx + 90, sy + (Math.random() - 0.5) * 20); x.stroke(); }
+  for (let i = 0; i < 5; i++) { x.strokeStyle = 'rgba(90,70,45,.25)'; x.lineWidth = 0.7; x.beginPath(); let px = Math.random() * w, py = Math.random() * h; x.moveTo(px, py); for (let s = 0; s < 8; s++) { px += (Math.random() - 0.3) * 14; py += (Math.random() - 0.5) * 14; x.lineTo(px, py); } x.stroke(); }
+}), 1);
+// paper grain: cream ground, fibres in two directions, low mottle, speckles; shared by the laid sheet, the stack and the cloth
+function paperCanvas(w = 256, h = 192, tone = '#efe6d2') {
+  return noiseCanvas(w, h, (x) => {
+    x.fillStyle = tone; x.fillRect(0, 0, w, h);
+    for (let i = 0; i < 60; i++) { const g = x.createRadialGradient(Math.random() * w, Math.random() * h, 2, Math.random() * w, Math.random() * h, 30 + Math.random() * 40); g.addColorStop(0, `rgba(${Math.random() < 0.5 ? '150,120,80' : '255,255,245'},${0.03 + Math.random() * 0.05})`); g.addColorStop(1, 'rgba(0,0,0,0)'); x.fillStyle = g; x.fillRect(0, 0, w, h); }
+    for (let i = 0; i < 900; i++) { const a = Math.random() * 0.1; x.strokeStyle = `rgba(120,90,50,${a})`; x.lineWidth = 0.5 + Math.random(); const px = Math.random() * w, py = Math.random() * h, l = 2 + Math.random() * 10, d = Math.random() < 0.6 ? 0 : Math.PI / 2 + (Math.random() - 0.5) * 0.6; x.beginPath(); x.moveTo(px, py); x.lineTo(px + Math.cos(d) * l, py + Math.sin(d) * l + (Math.random() - 0.5)); x.stroke(); }
+    for (let i = 0; i < 300; i++) { x.fillStyle = `rgba(80,60,30,${Math.random() * 0.18})`; x.fillRect(Math.random() * w, Math.random() * h, 1, 1); }
+  });
+}
+function paperTexture(w = 256, h = 192) { const t = new THREE.CanvasTexture(paperCanvas(w, h)); t.colorSpace = THREE.SRGBColorSpace; return t; }
+const paperGrainTex = texOf(paperCanvas(256, 256), 1);
+// kilim: bands with small stepped motifs in the pigment colours
+const kilimTex = (() => { const t = texOf(noiseCanvas(256, 512, (x, w, h) => {
+  const bands = ['#8a3a2a', '#2c4a8a', '#d9a441', '#8a3a2a', '#e7dfcb', '#2c4a8a', '#8a3a2a', '#4f7f4c', '#8a3a2a'];
+  bands.forEach((c, i) => { x.fillStyle = c; x.fillRect(0, i * h / bands.length, w, h / bands.length + 1); });
+  const bh = h / bands.length;
+  for (let i = 0; i < bands.length; i++) { x.fillStyle = i % 2 ? '#e7dfcb' : '#2a2520'; for (let k = 0; k < 8; k++) { const cx = (k + 0.5) * w / 8, cy = (i + 0.5) * bh; x.beginPath(); x.moveTo(cx, cy - bh * 0.3); x.lineTo(cx + 8, cy); x.lineTo(cx, cy + bh * 0.3); x.lineTo(cx - 8, cy); x.closePath(); x.fill(); } }
+  for (let i = 0; i < 1200; i++) { x.fillStyle = `rgba(0,0,0,${Math.random() * 0.12})`; x.fillRect(Math.random() * w, Math.random() * h, 2, 1); }
+}), 1); t.repeat.set(1, 1); return t; })();
+// the view through the window: morning sky, the glow of the sun, a cypress and a far dome with a minaret
+const windowTex = (() => { const t = new THREE.CanvasTexture(noiseCanvas(256, 256, (x, w, h) => {
+  const g = x.createLinearGradient(0, 0, 0, h); g.addColorStop(0, '#9fc3e6'); g.addColorStop(0.55, '#f4dcb0'); g.addColorStop(1, '#fff3d6'); x.fillStyle = g; x.fillRect(0, 0, w, h);
+  const s = x.createRadialGradient(70, 120, 5, 70, 120, 120); s.addColorStop(0, 'rgba(255,250,225,1)'); s.addColorStop(0.3, 'rgba(255,240,200,.7)'); s.addColorStop(1, 'rgba(255,240,200,0)'); x.fillStyle = s; x.fillRect(0, 0, w, h);
+  x.fillStyle = 'rgba(90,80,110,.45)'; // far city: dome and minaret
+  x.beginPath(); x.arc(180, 190, 26, Math.PI, 0); x.lineTo(206, 215); x.lineTo(154, 215); x.closePath(); x.fill();
+  x.fillRect(214, 150, 5, 65); x.beginPath(); x.moveTo(211, 150); x.lineTo(216.5, 136); x.lineTo(222, 150); x.closePath(); x.fill();
+  x.fillStyle = 'rgba(40,60,40,.75)'; // cypress, near
+  x.beginPath(); x.moveTo(40, 256); x.quadraticCurveTo(26, 190, 44, 120); x.quadraticCurveTo(62, 190, 48, 256); x.closePath(); x.fill();
+  x.fillStyle = 'rgba(120,110,90,.55)'; x.fillRect(0, 222, w, 34); // the sill / rooftops below
+  for (let i = 0; i < 200; i++) { x.fillStyle = `rgba(255,255,255,${Math.random() * 0.06})`; x.fillRect(Math.random() * w, Math.random() * h, 1, 1); } // glass haze
+})); t.colorSpace = THREE.SRGBColorSpace; return t; })();
+
+// ---- Geometry helpers: three merged static groups (wood / plaster / paper), each one draw call ----
+const parts = [], woodParts = [], paperParts = [];
 const _col = new THREE.Color();
 function colorize(g, color, jitter = 0.05) {
   _col.set(color); const n = g.attributes.position.count, arr = new Float32Array(n * 3);
   for (let i = 0; i < n; i++) { const j = 1 + (Math.random() - 0.5) * jitter; arr[i * 3] = _col.r * j; arr[i * 3 + 1] = _col.g * j; arr[i * 3 + 2] = _col.b * j; }
   g.setAttribute('color', new THREE.BufferAttribute(arr, 3)); return g;
 }
-function box(w, h, d, x, y, z, color, ry = 0, list = parts, jitter) { const g = new THREE.BoxGeometry(w, h, d); if (ry) g.rotateY(ry); g.translate(x, y, z); list.push(colorize(g, color, jitter)); return g; }
-function cyl(rt, rb, h, x, y, z, color, seg = 10, list = parts, rot) { const g = new THREE.CylinderGeometry(rt, rb, h, seg); if (rot) g.rotateZ(rot[0]).rotateY(rot[1]); g.translate(x, y, z); list.push(colorize(g, color)); return g; }
+// world-projected UVs after the geometry is placed, so one grain texture runs continuously along every plank;
+// grainY makes the grain vertical (legs, posts)
+function worldUV(g, scale = 1.6, grainY = false) {
+  const p = g.attributes.position, uv = g.attributes.uv;
+  for (let i = 0; i < p.count; i++) { const x = p.getX(i), y = p.getY(i), z = p.getZ(i); if (grainY) uv.setXY(i, y * scale, (x + z * 0.37) * scale); else uv.setXY(i, (x + z * 0.37) * scale, (y + z * 0.9) * scale); }
+  return g;
+}
+function box(w, h, d, x, y, z, color, ry = 0, list = parts, jitter, grainY) { const g = new THREE.BoxGeometry(w, h, d); if (ry) g.rotateY(ry); g.translate(x, y, z); worldUV(g, 1.6, grainY); list.push(colorize(g, color, jitter)); return g; }
+function cyl(rt, rb, h, x, y, z, color, seg = 10, list = parts, rot, grainY = true) { const g = new THREE.CylinderGeometry(rt, rb, h, seg); if (rot) g.rotateZ(rot[0]).rotateY(rot[1]); g.translate(x, y, z); worldUV(g, 1.6, grainY); list.push(colorize(g, color)); return g; }
 function mergedMesh(list, mat, shadow = true) { const g = mergeGeometries(list, false); const m = new THREE.Mesh(g, mat); m.castShadow = shadow; m.receiveShadow = true; return m; }
-const lambert = new THREE.MeshLambertMaterial({ vertexColors: true });
+const lambert = new THREE.MeshLambertMaterial({ vertexColors: true, map: plasterTex });
+const woodMat = new THREE.MeshLambertMaterial({ vertexColors: true, map: woodTex });
+const paperMat = new THREE.MeshLambertMaterial({ vertexColors: true, map: paperGrainTex });
+const W = woodParts, P = paperParts; // shorthand for the lists below
 
-// floor planks and a kilim
-for (let i = 0; i < 16; i++) box(0.36, 0.02, 7, -2.7 + i * 0.36, -0.01, -0.8, i % 2 ? 0x6b4a2e : 0x74522f, 0, parts, 0.12);
-const KIL = [0x8a3a2a, 0x2c4a8a, 0xd9a441, 0x8a3a2a, 0xe7dfcb, 0x2c4a8a, 0x8a3a2a];
-KIL.forEach((c, i) => box(2.2, 0.012, 0.2, 0, 0.006, -0.7 + i * 0.2, c, 0, parts, 0.08));
-// walls and window
-box(7, 3.2, 0.12, 0, 1.6, -1.75, 0xcbb79a, 0, parts, 0.06);
-box(0.12, 3.2, 6, -3.0, 1.6, 0.6, 0xc4ae90, 0, parts, 0.06);
-box(0.12, 3.2, 6, 3.0, 1.6, 0.6, 0xc4ae90, 0, parts, 0.06);
+// floor planks (oak, grain along x) and a kilim with its own woven texture
+for (let i = 0; i < 16; i++) box(0.36, 0.02, 7, -2.7 + i * 0.36, -0.01, -0.8, i % 2 ? 0x6b4a2e : 0x74522f, 0, W, 0.14, true);
+{ const k = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 1.4), new THREE.MeshLambertMaterial({ map: kilimTex })); k.rotation.x = -Math.PI / 2; k.position.set(0, 0.004, -0.1); k.receiveShadow = true; scene.add(k); }
+// walls: lime plaster, darker towards the floor (vertex colour gradient), a walnut skirting and a picture rail
+function wall(w, h, d, x, y, z) { const g = box(w, h, d, x, y, z, C.plaster, 0, parts, 0.05); const p = g.attributes.position, c = g.attributes.color; for (let i = 0; i < p.count; i++) { const f = 0.78 + 0.22 * Math.min(1, p.getY(i) / 2.2); c.setXYZ(i, c.getX(i) * f, c.getY(i) * f, c.getZ(i) * f); } }
+wall(7, 3.2, 0.12, 0, 1.6, -1.75); wall(0.12, 3.2, 6, -3.0, 1.6, 0.6); wall(0.12, 3.2, 6, 3.0, 1.6, 0.6);
+box(7, 0.12, 0.03, 0, 0.06, -1.68, C.walnutDark, 0, W); box(0.03, 0.12, 6, -2.93, 0.06, 0.6, C.walnutDark, 0, W); box(0.03, 0.12, 6, 2.93, 0.06, 0.6, C.walnutDark, 0, W);
+box(7, 0.04, 0.04, 0, 2.3, -1.68, C.walnut, 0, W);
+// window: walnut frame and muntins, a deep sill, the view as a lit pane
 const WX = 0.1, WY = 1.62, WW = 1.2, WH = 1.15;
-box(WW + 0.12, 0.07, 0.16, WX, WY + WH / 2, -1.69, 0x5a3b24); box(WW + 0.12, 0.07, 0.16, WX, WY - WH / 2, -1.69, 0x5a3b24);
-box(0.07, WH, 0.16, WX - WW / 2, WY, -1.69, 0x5a3b24); box(0.07, WH, 0.16, WX + WW / 2, WY, -1.69, 0x5a3b24);
-box(0.04, WH, 0.05, WX, WY, -1.67, 0x5a3b24); box(WW, 0.04, 0.05, WX, WY, -1.67, 0x5a3b24);
-box(WW + 0.3, 0.05, 0.3, WX, WY - WH / 2 - 0.05, -1.59, 0x8a6a48); // sill
-const pane = new THREE.Mesh(new THREE.PlaneGeometry(WW, WH), new THREE.MeshBasicMaterial({ color: 0xfff1cf })); pane.position.set(WX, WY, -1.685); scene.add(pane);
-// shelf with books and a jug on the right wall side
-box(1.4, 0.04, 0.3, -1.7, 1.3, -1.55, 0x6b4a2e);
-[[0x8a3a2a, 0.05], [0x2c4a8a, 0.04], [0x4f7f4c, 0.06], [0xd9a441, 0.035], [0x5a3b24, 0.05]].forEach(([c, w], i) => box(w, 0.26, 0.2, -2.2 + i * 0.07, 1.45, -1.55, c));
+box(WW + 0.12, 0.07, 0.16, WX, WY + WH / 2, -1.69, C.walnut, 0, W); box(WW + 0.12, 0.07, 0.16, WX, WY - WH / 2, -1.69, C.walnut, 0, W);
+box(0.07, WH, 0.16, WX - WW / 2, WY, -1.69, C.walnut, 0, W, undefined, true); box(0.07, WH, 0.16, WX + WW / 2, WY, -1.69, C.walnut, 0, W, undefined, true);
+box(0.04, WH, 0.05, WX, WY, -1.67, C.walnut, 0, W, undefined, true); box(WW, 0.04, 0.05, WX, WY, -1.67, C.walnut, 0, W);
+box(WW + 0.3, 0.05, 0.3, WX, WY - WH / 2 - 0.05, -1.59, C.oak, 0, W); // sill
+const pane = new THREE.Mesh(new THREE.PlaneGeometry(WW, WH), new THREE.MeshBasicMaterial({ map: windowTex })); pane.position.set(WX, WY, -1.685); scene.add(pane);
+// a shaft of window light towards the table: one additive quad with a soft gradient, dust motes drift inside it
+const shaft = (() => {
+  const c = noiseCanvas(64, 256, (x, w, h) => { const g = x.createLinearGradient(0, 0, 0, h); g.addColorStop(0, 'rgba(255,236,200,.55)'); g.addColorStop(0.6, 'rgba(255,236,200,.18)'); g.addColorStop(1, 'rgba(255,236,200,0)'); x.fillStyle = g; x.fillRect(0, 0, w, h); const s = x.createLinearGradient(0, 0, w, 0); s.addColorStop(0, 'rgba(0,0,0,1)'); s.addColorStop(0.25, 'rgba(0,0,0,0)'); s.addColorStop(0.75, 'rgba(0,0,0,0)'); s.addColorStop(1, 'rgba(0,0,0,1)'); x.globalCompositeOperation = 'destination-out'; x.fillStyle = s; x.fillRect(0, 0, w, h); });
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(1.25, 2.3), new THREE.MeshBasicMaterial({ map: t, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0.5, side: THREE.DoubleSide }));
+  m.position.set(WX + 0.35, WY - 0.75, -0.9); m.rotation.set(-0.95, 0.15, 0); m.renderOrder = 2; scene.add(m); return m;
+})();
+// shelf on the left wall: books, a jug, bottles of ox-gall and spare jars, a rolled sheet
+box(1.4, 0.04, 0.3, -1.7, 1.3, -1.55, C.walnut, 0, W); [[-2.35, 1.2], [-1.05, 1.2]].forEach(([x, y]) => box(0.04, 0.2, 0.26, x, y, -1.57, C.walnutDark, 0, W, undefined, true));
+[[0x8a3a2a, 0.05], [0x2c4a8a, 0.04], [0x4f7f4c, 0.06], [0xd9a441, 0.035], [0x5a3b24, 0.05], [0x6b4c9a, 0.045]].forEach(([c, w], i) => box(w, 0.26 - (i % 3) * 0.02, 0.2, -2.3 + i * 0.07, 1.45 - (i % 3) * 0.01, -1.55, c, 0, P, 0.1));
 cyl(0.05, 0.07, 0.22, -1.4, 1.43, -1.55, 0x9a7a5a, 12); cyl(0.03, 0.05, 0.08, -1.4, 1.58, -1.55, 0x9a7a5a, 12);
-// table
-box(1.7, 0.05, 1.15, 0, TABLE_Y - 0.025, 0, 0x8a6240, 0, parts, 0.08);
-box(1.7, 0.04, 0.05, 0, TABLE_Y - 0.07, 0.55, 0x6b4a2e); box(1.7, 0.04, 0.05, 0, TABLE_Y - 0.07, -0.55, 0x6b4a2e);
-[[-0.78, -0.5], [0.78, -0.5], [-0.78, 0.5], [0.78, 0.5]].forEach(([x, z]) => box(0.07, TABLE_Y - 0.05, 0.07, x, (TABLE_Y - 0.05) / 2, z, 0x5a3b24));
-// the tray (tekne): dark wooden rim, zinc-grey bottom
+[[-1.85, 0x3a5a3a, 0.03, 0.18], [-1.75, 0x6a3a2a, 0.025, 0.14], [-1.62, 0x2a2520, 0.028, 0.2]].forEach(([x, c, r, h]) => { cyl(r, r, h, x, 1.32 + h / 2, -1.55, c, 10); cyl(r * 0.5, r * 0.5, 0.04, x, 1.32 + h + 0.02, -1.55, 0x9a7a5a, 8); });
+cyl(0.02, 0.02, 0.34, -1.2, 1.34, -1.5, C.paper, 10, P, [Math.PI / 2, 0.3]);
+// a framed marbled sheet on the back wall, above the table (its texture is set once the sim runs, see marbleCanvas)
+box(0.5, 0.38, 0.03, -1.0, 1.75, -1.72, C.walnutDark, 0, W); box(0.44, 0.32, 0.035, -1.0, 1.75, -1.72, C.paper, 0, P, 0.02);
+const framedSheet = new THREE.Mesh(new THREE.PlaneGeometry(0.4, 0.28), new THREE.MeshLambertMaterial({ map: paperTexture() })); framedSheet.position.set(-1.0, 1.75, -1.70); scene.add(framedSheet);
+// a hanging calligraphy panel (levha) to the right of the window, and a hook with spare combs
+box(0.36, 0.5, 0.03, 1.45, 1.7, -1.72, C.walnutDark, 0, W); box(0.3, 0.44, 0.035, 1.45, 1.7, -1.72, 0xe4d6bd, 0, P, 0.02);
+[[-0.08, 0.02], [0.06, -0.12], [-0.02, 0.1], [0.1, 0.08]].forEach(([dx, dy]) => box(0.16, 0.012, 0.004, 1.45 + dx, 1.7 + dy, -1.70, C.ink, dx * 2.5, parts, 0.01)); // ink strokes
+[0.24, 0.16].forEach((len, i) => { box(len, 0.018, 0.02, 2.2 + i * 0.3, 1.5 - i * 0.18, -1.7, C.oak, 0.2, W); for (let k = 0; k < len / 0.02; k++) cyl(0.0015, 0.0015, 0.05, 2.2 + i * 0.3 - len / 2 + k * 0.02, 1.5 - i * 0.18 - 0.03, -1.7, 0xb9b9c4, 4); });
+// table: oak top with a walnut edge band, apron with a drawer and a brass knob, turned legs, stretchers
+box(1.7, 0.05, 1.15, 0, TABLE_Y - 0.025, 0, C.oak, 0, W, 0.08);
+box(1.74, 0.02, 1.19, 0, TABLE_Y - 0.006, 0, C.walnut, 0, W); // edge band
+box(1.7, 0.08, 0.05, 0, TABLE_Y - 0.09, 0.55, C.walnut, 0, W); box(1.7, 0.08, 0.05, 0, TABLE_Y - 0.09, -0.55, C.walnut, 0, W);
+box(0.05, 0.08, 1.1, -0.825, TABLE_Y - 0.09, 0, C.walnut, 0, W); box(0.05, 0.08, 1.1, 0.825, TABLE_Y - 0.09, 0, C.walnut, 0, W);
+box(0.5, 0.06, 0.02, 0.25, TABLE_Y - 0.09, 0.575, C.oakLight, 0, W); cyl(0.012, 0.012, 0.025, 0.25, TABLE_Y - 0.09, 0.59, C.brass, 10, parts, [Math.PI / 2, 0]); // drawer + knob
+[[-0.78, -0.5], [0.78, -0.5], [-0.78, 0.5], [0.78, 0.5]].forEach(([x, z]) => { box(0.07, TABLE_Y - 0.05, 0.07, x, (TABLE_Y - 0.05) / 2, z, C.walnut, 0, W, undefined, true); cyl(0.05, 0.04, 0.05, x, 0.4, z, C.walnut, 10, W); cyl(0.04, 0.05, 0.05, x, 0.2, z, C.walnut, 10, W); });
+box(1.5, 0.03, 0.03, 0, 0.12, 0.5, C.walnut, 0, W); box(1.5, 0.03, 0.03, 0, 0.12, -0.5, C.walnut, 0, W);
+// the tray (tekne): walnut rim with a lighter top strip and brass corner caps, zinc bottom
 const RW = TRAY_W + 0.08, RH = TRAY_H + 0.08, RT = 0.04, RTOP = TABLE_Y + 0.085;
-box(RW, 0.085, RT, 0, TABLE_Y + 0.0425, -RH / 2 + RT / 2, 0x4a3420); box(RW, 0.085, RT, 0, TABLE_Y + 0.0425, RH / 2 - RT / 2, 0x4a3420);
-box(RT, 0.085, RH, -RW / 2 + RT / 2, TABLE_Y + 0.0425, 0, 0x4a3420); box(RT, 0.085, RH, RW / 2 - RT / 2, TABLE_Y + 0.0425, 0, 0x4a3420);
-box(TRAY_W, 0.01, TRAY_H, 0, TABLE_Y + 0.01, 0, 0x6f6a5e);
-// pigment jars go on the table behind the tray (instanced); a cloth with the resting tools on the right
-box(0.3, 0.006, 0.9, 0.62, TABLE_Y + 0.003, 0.05, 0xe7dfcb, 0, parts, 0.04);
-cyl(0.009, 0.009, 0.24, 0.6, TABLE_Y + 0.016, 0.1, 0x7a4a26, 8, parts, [Math.PI / 2, 0.2]); cyl(0.013, 0.004, 0.06, 0.6, TABLE_Y + 0.016, 0.25, 0x2a2520, 8, parts, [Math.PI / 2, 0.2]);
-cyl(0.009, 0.009, 0.24, 0.68, TABLE_Y + 0.016, -0.1, 0x7a4a26, 8, parts, [Math.PI / 2, -0.15]); cyl(0.013, 0.004, 0.06, 0.68, TABLE_Y + 0.016, 0.05, 0x1E6FB8, 8, parts, [Math.PI / 2, -0.15]);
-cyl(0.0025, 0.0025, 0.14, 0.56, TABLE_Y + 0.01, -0.3, 0xb9b9c4, 6, parts, [Math.PI / 2, 0]); cyl(0.008, 0.008, 0.07, 0.56, TABLE_Y + 0.012, -0.2, 0x7a4a26, 8, parts, [Math.PI / 2, 0]);
-// paper stack on the left, a comb beside it
-for (let i = 0; i < 6; i++) box(0.42, 0.004, 0.32, -0.64 + (Math.random() - 0.5) * 0.01, TABLE_Y + 0.002 + i * 0.004, 0.2 + (Math.random() - 0.5) * 0.01, 0xece4d0, (Math.random() - 0.5) * 0.06, parts, 0.03);
-box(0.5, 0.025, 0.03, -0.62, TABLE_Y + 0.0125, -0.3, 0x7a4a26, 0.1);
-for (let i = 0; i < 20; i++) cyl(0.002, 0.002, 0.05, -0.62 - 0.24 + i * 0.0245 + Math.sin(0.1) * 0, TABLE_Y + 0.01, -0.3 + 0.03 + (i - 10) * 0.0245 * 0.1, 0xb9b9c4, 5, parts, [Math.PI / 2, 0.1]);
-// a stool and a bowl of water on the floor, a drying line with pins
-box(0.34, 0.03, 0.34, 1.35, 0.44, 0.9, 0x6b4a2e); [[-0.13, -0.13], [0.13, -0.13], [-0.13, 0.13], [0.13, 0.13]].forEach(([x, z]) => box(0.04, 0.43, 0.04, 1.35 + x, 0.215, 0.9 + z, 0x5a3b24));
-cyl(0.16, 0.12, 0.12, -1.3, 0.06, 0.6, 0x8a6a48, 14);
+box(RW, 0.085, RT, 0, TABLE_Y + 0.0425, -RH / 2 + RT / 2, C.walnutDark, 0, W); box(RW, 0.085, RT, 0, TABLE_Y + 0.0425, RH / 2 - RT / 2, C.walnutDark, 0, W);
+box(RT, 0.085, RH, -RW / 2 + RT / 2, TABLE_Y + 0.0425, 0, C.walnutDark, 0, W); box(RT, 0.085, RH, RW / 2 - RT / 2, TABLE_Y + 0.0425, 0, C.walnutDark, 0, W);
+box(RW, 0.006, RT, 0, RTOP + 0.003, -RH / 2 + RT / 2, C.oak, 0, W); box(RW, 0.006, RT, 0, RTOP + 0.003, RH / 2 - RT / 2, C.oak, 0, W);
+box(RT, 0.006, RH, -RW / 2 + RT / 2, RTOP + 0.003, 0, C.oak, 0, W); box(RT, 0.006, RH, RW / 2 - RT / 2, RTOP + 0.003, 0, C.oak, 0, W);
+[[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([a, b]) => cyl(0.014, 0.016, 0.006, a * (RW / 2 - RT / 2), RTOP + 0.009, b * (RH / 2 - RT / 2), 0x8f7226, 10, parts, undefined, false)); // brass corner nails
+box(TRAY_W, 0.01, TRAY_H, 0, TABLE_Y + 0.01, 0, C.zinc);
+// right of the tray: a cloth with the resting tools (awl, brush, a reed pen), a cup of rose-twig brushes
+box(0.3, 0.006, 0.9, 0.62, TABLE_Y + 0.003, 0.05, C.paper, 0, P, 0.04);
+cyl(0.009, 0.009, 0.24, 0.6, TABLE_Y + 0.016, 0.1, 0x7a4a26, 8, W, [Math.PI / 2, 0.2]); cyl(0.013, 0.004, 0.06, 0.6, TABLE_Y + 0.016, 0.25, C.ink, 8, parts, [Math.PI / 2, 0.2]);
+cyl(0.009, 0.009, 0.24, 0.68, TABLE_Y + 0.016, 0.32, 0x7a4a26, 8, W, [Math.PI / 2, -0.15]); cyl(0.013, 0.004, 0.06, 0.68, TABLE_Y + 0.016, 0.47, C.blue, 8, parts, [Math.PI / 2, -0.15]);
+cyl(0.0025, 0.0025, 0.14, 0.56, TABLE_Y + 0.01, -0.3, 0xb9b9c4, 6, parts, [Math.PI / 2, 0]); cyl(0.008, 0.008, 0.07, 0.56, TABLE_Y + 0.012, -0.2, 0x7a4a26, 8, W, [Math.PI / 2, 0]);
+cyl(0.004, 0.003, 0.16, 0.64, TABLE_Y + 0.008, 0.4, 0xb08a4a, 6, parts, [Math.PI / 2, 0.5]); // reed pen
+cyl(0.04, 0.034, 0.1, 0.79, TABLE_Y + 0.05, -0.14, 0x9a7a5a, 12); for (let i = 0; i < 5; i++) { const a = i / 5 * Math.PI * 2; cyl(0.004, 0.005, 0.22, 0.79 + Math.cos(a) * 0.02, TABLE_Y + 0.16, -0.14 + Math.sin(a) * 0.02, 0x7a4a26, 6, W, [Math.cos(a) * 0.2, Math.sin(a) * 0.2]); cyl(0.009, 0.003, 0.04, 0.79 + Math.cos(a) * 0.035, TABLE_Y + 0.28, -0.14 + Math.sin(a) * 0.035, C.ink, 6, parts); }
+// the oil lamp (kandil) at the back right, a bowl of ox-gall beside it, the muller and a pile of ground ochre
+cyl(0.045, 0.055, 0.015, 0.76, TABLE_Y + 0.0075, -0.47, C.brass, 12); cyl(0.012, 0.016, 0.12, 0.76, TABLE_Y + 0.075, -0.47, C.brass, 8); cyl(0.035, 0.02, 0.05, 0.76, TABLE_Y + 0.16, -0.47, C.brass, 10);
+cyl(0.03, 0.022, 0.07, 0.76, TABLE_Y + 0.22, -0.47, 0xfff0c8, 10); // the glass
+cyl(0.05, 0.035, 0.045, 0.66, TABLE_Y + 0.0225, -0.3, 0x3f6f78, 12); cyl(0.042, 0.042, 0.004, 0.66, TABLE_Y + 0.046, -0.3, 0x8a9a7a, 12);
+cyl(0.022, 0.03, 0.04, -0.76, TABLE_Y + 0.02, -0.5, 0x8a8a90, 12); cyl(0.012, 0.012, 0.05, -0.76, TABLE_Y + 0.06, -0.5, 0x8a8a90, 8); box(0.16, 0.012, 0.12, -0.78, TABLE_Y + 0.006, -0.5, 0x6f6a5e, 0.2, parts, 0.05); cyl(0.0001, 0.03, 0.02, -0.7, TABLE_Y + 0.02, -0.52, C.ochre, 10);
+// a small brass bowl of size (kitre) with a ladle, and a vase with one red tulip, both left of the jars
+cyl(0.07, 0.05, 0.05, -0.76, TABLE_Y + 0.025, -0.33, C.brass, 14); cyl(0.064, 0.064, 0.004, -0.76, TABLE_Y + 0.05, -0.33, 0xd9d2bd, 14);
+cyl(0.004, 0.004, 0.14, -0.72, TABLE_Y + 0.08, -0.33, C.walnut, 6, W, [0.9, 0.3]); cyl(0.02, 0.012, 0.012, -0.68, TABLE_Y + 0.05, -0.35, C.brass, 10);
+cyl(0.018, 0.012, 0.09, 0.62, TABLE_Y + 0.045, -0.5, 0x3f6f78, 10); cyl(0.004, 0.004, 0.14, 0.62, TABLE_Y + 0.14, -0.5, 0x4f7f4c, 5, parts, [0.1, 0]); cyl(0.0001, 0.018, 0.045, 0.63, TABLE_Y + 0.23, -0.5, C.ochre, 8);
+// paper stack on the left, a comb beside it, a bone folder
+for (let i = 0; i < 8; i++) box(0.42, 0.004, 0.32, -0.64 + (Math.random() - 0.5) * 0.012, TABLE_Y + 0.002 + i * 0.004, 0.2 + (Math.random() - 0.5) * 0.012, i === 7 ? C.paper : 0xe6dcc6, (Math.random() - 0.5) * 0.08, P, 0.03);
+box(0.5, 0.025, 0.03, -0.62, TABLE_Y + 0.0125, -0.3, 0x7a4a26, 0.1, W);
+for (let i = 0; i < 20; i++) cyl(0.002, 0.002, 0.05, -0.62 - 0.24 + i * 0.0245, TABLE_Y + 0.01, -0.3 + 0.03 + (i - 10) * 0.0245 * 0.1, 0xb9b9c4, 5, parts, [Math.PI / 2, 0.1]);
+box(0.12, 0.006, 0.02, -0.7, TABLE_Y + 0.036, 0.3, 0xe8dcc0, 0.4, parts, 0.02); // bone folder on the stack
+// a stool, a water bowl, a basket of scrap paper on the floor; the drying line with pins
+box(0.34, 0.03, 0.34, 1.35, 0.44, 0.9, C.walnut, 0, W); [[-0.13, -0.13], [0.13, -0.13], [-0.13, 0.13], [0.13, 0.13]].forEach(([x, z]) => box(0.04, 0.43, 0.04, 1.35 + x, 0.215, 0.9 + z, C.walnutDark, 0, W, undefined, true));
+cyl(0.16, 0.12, 0.12, -1.3, 0.06, 0.6, C.oak, 14, W);
+cyl(0.14, 0.11, 0.16, 1.5, 0.08, 0.2, 0xb08a4a, 12); for (let i = 0; i < 5; i++) box(0.16, 0.003, 0.12, 1.5 + (Math.random() - 0.5) * 0.06, 0.165 + i * 0.004, 0.2 + (Math.random() - 0.5) * 0.06, C.paper, Math.random() * 3, P, 0.03);
 const LINE_Z = -1.0, LINE_Y = 1.14;
 cyl(0.004, 0.004, 2.6, 0, LINE_Y, LINE_Z, 0x6a5a48, 5, parts, [Math.PI / 2, 0]);
-cyl(0.02, 0.02, LINE_Y + 0.1, -1.3, (LINE_Y + 0.1) / 2, LINE_Z, 0x5a3b24, 8); cyl(0.02, 0.02, LINE_Y + 0.1, 1.3, (LINE_Y + 0.1) / 2, LINE_Z, 0x5a3b24, 8);
-[-0.95, -0.4, 0.95].forEach(x => { box(0.02, 0.05, 0.015, x - 0.15, LINE_Y - 0.01, LINE_Z + 0.01, 0xc4a070); box(0.02, 0.05, 0.015, x + 0.15, LINE_Y - 0.01, LINE_Z + 0.01, 0xc4a070); });
+cyl(0.02, 0.02, LINE_Y + 0.1, -1.3, (LINE_Y + 0.1) / 2, LINE_Z, C.walnut, 8, W); cyl(0.02, 0.02, LINE_Y + 0.1, 1.3, (LINE_Y + 0.1) / 2, LINE_Z, C.walnut, 8, W);
+[-0.95, -0.4, 0.95].forEach(x => { box(0.02, 0.05, 0.015, x - 0.15, LINE_Y - 0.01, LINE_Z + 0.01, 0xc4a070, 0, W, undefined, true); box(0.02, 0.05, 0.015, x + 0.15, LINE_Y - 0.01, LINE_Z + 0.01, 0xc4a070, 0, W, undefined, true); });
 const statics = mergedMesh(parts, lambert); scene.add(statics);
+const woodStatics = mergedMesh(woodParts, woodMat); scene.add(woodStatics);
+const paperStatics = mergedMesh(paperParts, paperMat); scene.add(paperStatics);
 
-// pigment jars: InstancedMesh with per-instance colours
+// pigment pots: glazed ceramic (MeshStandard picks up the window from the environment map), cork stoppers and a
+// paper label on each, three InstancedMeshes with per-instance colours
 const JAR_N = PAL.length;
-const jarGeo = new THREE.CylinderGeometry(0.03, 0.026, 0.065, 12), lidGeo = new THREE.CylinderGeometry(0.031, 0.031, 0.012, 12);
-const jars = new THREE.InstancedMesh(jarGeo, new THREE.MeshLambertMaterial({ color: 0xffffff }), JAR_N);
-const lids = new THREE.InstancedMesh(lidGeo, new THREE.MeshLambertMaterial({ color: 0x3a2a1c }), JAR_N);
+const jarGeo = new THREE.CylinderGeometry(0.028, 0.024, 0.062, 14), lidGeo = new THREE.CylinderGeometry(0.022, 0.026, 0.016, 12), labelGeo = new THREE.PlaneGeometry(0.03, 0.02);
+const jars = new THREE.InstancedMesh(jarGeo, new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.35, metalness: 0.0, envMapIntensity: 0.8 }), JAR_N);
+const lids = new THREE.InstancedMesh(lidGeo, new THREE.MeshLambertMaterial({ color: 0xb08a5a }), JAR_N);
+const labels = new THREE.InstancedMesh(labelGeo, new THREE.MeshLambertMaterial({ color: 0xefe6d2, map: paperGrainTex }), JAR_N);
 {
-  const m = new THREE.Matrix4();
+  const m = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), sc = new THREE.Vector3(1, 1, 1), pos = new THREE.Vector3(), col = new THREE.Color();
   for (let i = 0; i < JAR_N; i++) {
-    const x = -0.55 + i * (1.1 / (JAR_N - 1)), z = -0.45 + (i % 2) * 0.07;
-    m.makeTranslation(x, TABLE_Y + 0.0325, z); jars.setMatrixAt(i, m); jars.setColorAt(i, new THREE.Color(PAL[i].hex));
-    m.makeTranslation(x, TABLE_Y + 0.071, z); lids.setMatrixAt(i, m);
+    const x = -0.55 + i * (1.1 / (JAR_N - 1)), z = -0.45 + (i % 2) * 0.07, ry = (Math.random() - 0.5) * 0.6;
+    m.makeTranslation(x, TABLE_Y + 0.031, z); jars.setMatrixAt(i, m); col.set(PAL[i].hex).multiplyScalar(0.95); jars.setColorAt(i, col);
+    m.makeTranslation(x, TABLE_Y + 0.07, z); lids.setMatrixAt(i, m);
+    e.set(-0.12, ry, 0); q.setFromEuler(e); pos.set(x + Math.sin(ry) * 0.027, TABLE_Y + 0.03, z + Math.cos(ry) * 0.027); m.compose(pos, q, sc); labels.setMatrixAt(i, m);
   }
-  jars.instanceMatrix.needsUpdate = true; jars.instanceColor.needsUpdate = true; lids.instanceMatrix.needsUpdate = true;
-  jars.castShadow = lids.castShadow = true; jars.receiveShadow = true; scene.add(jars, lids);
+  jars.instanceMatrix.needsUpdate = true; jars.instanceColor.needsUpdate = true; lids.instanceMatrix.needsUpdate = true; labels.instanceMatrix.needsUpdate = true;
+  jars.castShadow = lids.castShadow = true; jars.receiveShadow = true; scene.add(jars, lids, labels);
 }
 
 // The water surface: the paint polygons are rasterised on the GPU into a multisampled render target with the
@@ -1277,7 +1419,18 @@ function paintToCanvas(w, h) {
   const full = document.createElement('canvas'); full.width = PW; full.height = PH; full.getContext('2d').putImageData(img, 0, 0);
   const can = document.createElement('canvas'); can.width = w; can.height = h; can.getContext('2d').drawImage(full, 0, 0, w, h); return can;
 }
-const water = new THREE.Mesh(new THREE.PlaneGeometry(TRAY_W, TRAY_H), new THREE.MeshStandardMaterial({ map: paintRT.texture, roughness: 0.32, metalness: 0.0 }));
+// wet surface: a faint ripple normal map under the paint so the window's reflection breaks up like size (kitre)
+// that has just been combed, and a low roughness so the pigment reads wet rather than printed
+const rippleTex = (() => {
+  const N = 128, c = document.createElement('canvas'); c.width = c.height = N; const x = c.getContext('2d'), img = x.createImageData(N, N), d = img.data;
+  const h = (i, j) => Math.sin(i * 0.19 + Math.sin(j * 0.07) * 2) * 0.5 + Math.sin(j * 0.23 + i * 0.05) * 0.35 + Math.sin((i + j) * 0.11) * 0.25;
+  for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
+    const dx = h(i + 1, j) - h(i - 1, j), dy = h(i, j + 1) - h(i, j - 1), k = (j * N + i) * 4;
+    d[k] = 128 + dx * 40; d[k + 1] = 128 + dy * 40; d[k + 2] = 255; d[k + 3] = 255;
+  }
+  x.putImageData(img, 0, 0); const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(4, 3); return t;
+})();
+const water = new THREE.Mesh(new THREE.PlaneGeometry(TRAY_W, TRAY_H), new THREE.MeshStandardMaterial({ map: paintRT.texture, roughness: 0.27, metalness: 0.0, normalMap: rippleTex, normalScale: new THREE.Vector2(0.07, 0.07), envMapIntensity: 1.0 }));
 water.rotation.x = -Math.PI / 2; water.position.set(0, TRAY_Y, 0); water.receiveShadow = true; scene.add(water);
 // transparent overlay above the water: hint ghost and tool cursor
 const ovCan = document.createElement('canvas'); ovCan.width = 512; ovCan.height = 384; const ovCtx = ovCan.getContext('2d', { willReadFrequently: true });
@@ -1287,15 +1440,12 @@ overlay.rotation.x = -Math.PI / 2; overlay.position.set(0, TRAY_Y + 0.0015, 0); 
 // invisible pick plane
 const pickPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -TRAY_Y);
 
-// paper: procedural cream texture with fibres, used for the laid sheet and the hanging ones
-function paperTexture(w = 256, h = 192) {
-  const c = document.createElement('canvas'); c.width = w; c.height = h; const x = c.getContext('2d');
-  x.fillStyle = '#efe6d2'; x.fillRect(0, 0, w, h);
-  for (let i = 0; i < 600; i++) { x.fillStyle = `rgba(120,90,50,${Math.random() * 0.12})`; x.fillRect(Math.random() * w, Math.random() * h, Math.random() * 6 + 1, 1); }
-  const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace; return tex;
-}
+// paper: see paperCanvas above (grain shared with the stack and the cloth)
 const paperTex = paperTexture();
-const sheet = new THREE.Mesh(new THREE.PlaneGeometry(TRAY_W, TRAY_H), new THREE.MeshLambertMaterial({ map: paperTex, side: THREE.DoubleSide }));
+// the sheet carries its own pattern as a faint emissive so the finished marbling reads bright even with the window behind it
+const sheet = new THREE.Mesh(new THREE.PlaneGeometry(TRAY_W, TRAY_H, 24, 1), new THREE.MeshLambertMaterial({ map: paperTex, emissive: 0x8a8278, emissiveMap: paperTex, side: THREE.DoubleSide }));
+function setSheetMap(tex) { const m = sheet.material; if (m.map && m.map !== paperTex && m.map !== tex) m.map.dispose(); m.map = tex; m.emissiveMap = tex; m.needsUpdate = true; }
+const sheetBase = sheet.geometry.attributes.position.array.slice(); // flat positions; stepLay bends the sheet as it is lifted
 sheet.rotation.x = -Math.PI / 2; sheet.castShadow = true; sheet.visible = false; scene.add(sheet);
 // three sheets drying on the line
 const hanging = [-0.95, -0.4, 0.95].map(x => {
@@ -1306,38 +1456,87 @@ function setHangingTexture(i, canvasOrImg) {
   const tex = new THREE.CanvasTexture(canvasOrImg); tex.colorSpace = THREE.SRGBColorSpace;
   const m = hanging[i]; if (m.material.map && m.material.map !== paperTex) m.material.map.dispose(); m.material.map = tex; m.material.needsUpdate = true;
 }
+// decorative marbled sheets (the framed one on the wall, the three on the line until the gallery fills them):
+// short recipes run through the same simulation and drawn on paper grain
+function marbleCanvas(strokes, w = 256, h = 192, alpha = 1, tone = '#e9e0cb') {
+  const sim = new Marble(); for (const s of strokes) runStroke(sim, s);
+  const c = paperCanvas(w, h, tone), x = c.getContext('2d'); x.globalAlpha = alpha; sim.draw(x, w / SW, PAL, false); x.globalAlpha = 1; return c;
+}
+const DECOR = (() => {
+  recipeRng = mulberry(4242); const a = marbleCanvas([BR(0, zig(4, 90, SH - 90)), BR(1, zig(4, 150, SH - 40, SW - 50, 50)), BIZ(zig(7, 60, SH - 60))]);
+  recipeRng = mulberry(777); const b = marbleCanvas([BR(11, zig(4, 90, SH - 90)), BR(2, zig(4, 150, SH - 40, SW - 50, 50)), BIZ(zig(7, 60, SH - 60)), TAR(line([512, 20], [512, SH - 20]))]);
+  recipeRng = mulberry(99); const c = marbleCanvas([BR(7, zig(4, 90, SH - 90)), BR(8, zig(4, 150, SH - 40, SW - 50, 50)), ...[[260, 220], [760, 220], [512, 540]].map(([x, y]) => BIZ(spiral(x, y, 150, 3)))]);
+  recipeRng = mulberry(31); const d = marbleCanvas([BR(1, zig(3, 120, SH - 120)), BR(2, zig(3, 200, SH - 60, SW - 50, 50)), BIZ(zig(6, 70, SH - 70)), BIG(0, 512, 384), BIZ(line([512, 500], [512, 180])), BIZ(line([440, 420], [455, 280])), BIZ(line([584, 420], [569, 280]))]);
+  return [a, b, c, d];
+})();
+{ const t = new THREE.CanvasTexture(DECOR[3]); t.colorSpace = THREE.SRGBColorSpace; framedSheet.material.map = t; framedSheet.material.needsUpdate = true; }
+DECOR.slice(0, 3).forEach((c, i) => setHangingTexture(i, c));
+// the UI's paper: a light (hafif) marbled ground under every panel and a stronger band for edges, both drawn by the
+// simulation; the tool tray's walnut comes from the wood canvas. Set as CSS variables (data URLs).
+{
+  recipeRng = mulberry(5151); const soft = marbleCanvas([BR(11, zig(4, 90, SH - 90)), BR(8, zig(3, 160, SH - 130, SW - 50, 50)), BR(2, zig(3, 230, SH - 60)), BIZ(zig(7, 60, SH - 60))], 512, 384, 0.5, '#f3ecdb');
+  recipeRng = mulberry(6161); const band = marbleCanvas([BR(0, zig(4, 90, SH - 90)), BR(11, zig(4, 150, SH - 40, SW - 50, 50)), BIZ(zig(8, 60, SH - 60)), TAR(line([512, 20], [512, SH - 20]))], 512, 384, 1, '#e8dec6');
+  const st = document.documentElement.style;
+  st.setProperty('--marble', `url(${soft.toDataURL('image/jpeg', 0.8)})`); st.setProperty('--marble2', `url(${band.toDataURL('image/jpeg', 0.8)})`); st.setProperty('--wood', `url(${woodTex.image.toDataURL('image/jpeg', 0.85)})`);
+}
 
-// the active tool floats above the pointer
-const steel = new THREE.MeshStandardMaterial({ color: 0xc9c9d2, roughness: 0.35, metalness: 0.7 });
-const wood = new THREE.MeshLambertMaterial({ color: 0x7a4a26 }), bristle = new THREE.MeshLambertMaterial({ color: 0x2a2520 });
+// the active tool floats above the pointer: rose-twig brush with bound horsehair, awl with a turned handle and a brass
+// ferrule, walnut comb with steel pins and a grip, a glazed bowl of paint with a spoon for the big drop
+const steel = new THREE.MeshStandardMaterial({ color: 0xd0d0d8, roughness: 0.3, metalness: 0.8 });
+const brassMat = new THREE.MeshStandardMaterial({ color: C.brass, roughness: 0.4, metalness: 0.7 });
+const wood = new THREE.MeshLambertMaterial({ color: 0x7a4a26, map: woodTex }), roseWood = new THREE.MeshLambertMaterial({ color: 0x8c5a3a, map: woodTex }), bristle = new THREE.MeshLambertMaterial({ color: 0x2a2520 });
+const glaze = new THREE.MeshStandardMaterial({ color: 0x3f6f78, roughness: 0.3, metalness: 0.0, envMapIntensity: 0.8 });
 const toolMeshes = {};
 {
   const brush = new THREE.Group();
-  const h = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.01, 0.24, 8), wood); h.position.y = 0.17; brush.add(h);
-  const b = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.004, 0.07, 8), bristle); b.position.y = 0.035; brush.add(b);
+  const h = new THREE.Mesh(new THREE.CylinderGeometry(0.0075, 0.0105, 0.22, 8), roseWood); h.position.y = 0.17; h.rotation.z = 0.04; brush.add(h);
+  const knot = new THREE.Mesh(new THREE.SphereGeometry(0.011, 8, 6), roseWood); knot.position.set(0.002, 0.2, 0); knot.scale.set(1, 0.6, 1); brush.add(knot);
+  const tie = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.014, 10), new THREE.MeshLambertMaterial({ color: 0xc9b89a })); tie.position.y = 0.072; brush.add(tie);
+  const b = new THREE.Mesh(new THREE.CylinderGeometry(0.013, 0.003, 0.075, 8), bristle); b.position.y = 0.03; brush.add(b); brush.userData.bristles = b;
   brush.rotation.z = 0.35; toolMeshes.brush = brush;
   const big = new THREE.Group();
-  const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.024, 0.05, 12), new THREE.MeshLambertMaterial({ color: 0x9a7a5a })); cup.position.y = 0.06; big.add(cup);
-  const paint = new THREE.Mesh(new THREE.CircleGeometry(0.027, 12), new THREE.MeshLambertMaterial({ color: 0x1E6FB8 })); paint.rotation.x = -Math.PI / 2; paint.position.y = 0.084; big.add(paint); big.userData.paint = paint;
+  const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.032, 0.022, 0.045, 14), glaze); cup.position.y = 0.06; big.add(cup);
+  const paint = new THREE.Mesh(new THREE.CircleGeometry(0.028, 14), new THREE.MeshStandardMaterial({ color: C.blue, roughness: 0.2 })); paint.rotation.x = -Math.PI / 2; paint.position.y = 0.081; big.add(paint); big.userData.paint = paint;
+  const spoon = new THREE.Mesh(new THREE.CylinderGeometry(0.0015, 0.0015, 0.09, 6), steel); spoon.position.set(0.02, 0.1, 0); spoon.rotation.z = -0.5; big.add(spoon);
   big.rotation.z = -0.5; toolMeshes.big = big;
   const biz = new THREE.Group();
-  const n = new THREE.Mesh(new THREE.CylinderGeometry(0.0015, 0.0025, 0.12, 6), steel); n.position.y = 0.06; biz.add(n);
-  const hh = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.006, 0.08, 8), wood); hh.position.y = 0.16; biz.add(hh);
+  const n = new THREE.Mesh(new THREE.CylinderGeometry(0.0012, 0.0025, 0.12, 6), steel); n.position.y = 0.06; biz.add(n);
+  const fer = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.004, 0.014, 8), brassMat); fer.position.y = 0.125; biz.add(fer);
+  const hh = new THREE.Mesh(new THREE.CylinderGeometry(0.009, 0.0065, 0.07, 10), wood); hh.position.y = 0.165; biz.add(hh);
+  const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.011, 10, 8), wood); bulb.position.y = 0.205; biz.add(bulb);
   biz.rotation.z = 0.25; toolMeshes.biz = biz;
   const tarak = new THREE.Group();
-  const bar = new THREE.Mesh(new THREE.BoxGeometry(TOOL.tarak.teeth * TOOL.tarak.spacing / SW * TRAY_W + 0.02, 0.025, 0.03), wood); bar.position.y = 0.06; tarak.add(bar);
+  const barW = TOOL.tarak.teeth * TOOL.tarak.spacing / SW * TRAY_W + 0.02;
+  const bar = new THREE.Mesh(new THREE.BoxGeometry(barW, 0.02, 0.028), wood); bar.position.y = 0.06; tarak.add(bar);
+  const grip = new THREE.Mesh(new THREE.BoxGeometry(barW * 0.5, 0.022, 0.016), wood); grip.position.y = 0.081; tarak.add(grip);
+  const strip = new THREE.Mesh(new THREE.BoxGeometry(barW, 0.004, 0.03), brassMat); strip.position.y = 0.049; tarak.add(strip);
   const teethGeos = [];
-  for (let i = 0; i < TOOL.tarak.teeth; i++) { const g = new THREE.CylinderGeometry(0.0015, 0.0015, 0.06, 5); g.translate((i - (TOOL.tarak.teeth - 1) / 2) * TOOL.tarak.spacing / SW * TRAY_W, 0.02, 0); teethGeos.push(g); }
+  for (let i = 0; i < TOOL.tarak.teeth; i++) { const g = new THREE.CylinderGeometry(0.0012, 0.0012, 0.06, 5); g.translate((i - (TOOL.tarak.teeth - 1) / 2) * TOOL.tarak.spacing / SW * TRAY_W, 0.02, 0); teethGeos.push(g); }
   tarak.add(new THREE.Mesh(mergeGeometries(teethGeos, false), steel)); toolMeshes.tarak = tarak;
-  for (const k in toolMeshes) { toolMeshes[k].visible = false; toolMeshes[k].traverse(o => { if (o.isMesh) o.castShadow = true; }); scene.add(toolMeshes[k]); }
+  for (const k in toolMeshes) { toolMeshes[k].visible = false; toolMeshes[k].userData.rz = toolMeshes[k].rotation.z; toolMeshes[k].traverse(o => { if (o.isMesh) o.castShadow = true; }); scene.add(toolMeshes[k]); }
 }
 
 // lights: warm window sun with one shadow map over the table, soft hemisphere fill
-const sun = new THREE.DirectionalLight(0xffe4bd, 2.4); sun.position.set(-0.9, 2.7, -1.4); sun.target.position.copy(trayCentre); scene.add(sun, sun.target);
+const sun = new THREE.DirectionalLight(0xffd9a6, 2.5); sun.position.set(-0.9, 2.7, -1.4); sun.target.position.copy(trayCentre); scene.add(sun, sun.target);
 sun.castShadow = SET.quality !== 'low'; sun.shadow.mapSize.set(1024, 1024);
 sun.shadow.camera.left = -1.1; sun.shadow.camera.right = 1.1; sun.shadow.camera.top = 1.1; sun.shadow.camera.bottom = -1.1; sun.shadow.camera.near = 0.5; sun.shadow.camera.far = 7; sun.shadow.bias = -0.0006; sun.shadow.normalBias = 0.01;
-const hemi = new THREE.HemisphereLight(0xfff0d8, 0x4a3828, 0.95); scene.add(hemi);
-const fill = new THREE.DirectionalLight(0xbfd4ff, 0.35); fill.position.set(1.5, 1.5, 2); scene.add(fill);
+// warm plaster bounce from above, walnut floor bounce from below; a cool fill from the room side so wood keeps its shape
+const hemi = new THREE.HemisphereLight(0xffe9cc, 0x4a3222, 0.85); scene.add(hemi);
+const fill = new THREE.DirectionalLight(0xa9bfe0, 0.4); fill.position.set(1.6, 1.4, 2.2); scene.add(fill);
+// the oil lamp (kandil) on the far right of the table: a small warm pool of light that flickers (see stepLamp)
+const lamp = new THREE.PointLight(0xffb060, 0.9, 1.6, 2); lamp.position.set(0.76, TABLE_Y + 0.26, -0.47); scene.add(lamp);
+const flame = (() => { const c = document.createElement('canvas'); c.width = 32; c.height = 64; const x = c.getContext('2d'); const g = x.createRadialGradient(16, 40, 2, 16, 32, 30); g.addColorStop(0, 'rgba(255,250,210,1)'); g.addColorStop(0.3, 'rgba(255,190,80,0.9)'); g.addColorStop(0.7, 'rgba(255,120,30,0.35)'); g.addColorStop(1, 'rgba(255,100,20,0)'); x.fillStyle = g; x.fillRect(0, 0, 32, 64); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false })); sp.position.set(0.76, TABLE_Y + 0.25, -0.47); sp.scale.set(0.03, 0.055, 1); scene.add(sp); return sp; })();
+// Environment for the MeshStandard surfaces (water, steel, brass): a small canvas equirect of the room, a bright
+// window on a warm wall, run through PMREM once at boot. It gives the wet paint its sheen and the tools a glint.
+const envTex = (() => {
+  const c = document.createElement('canvas'); c.width = 256; c.height = 128; const x = c.getContext('2d');
+  const g = x.createLinearGradient(0, 0, 0, 128); g.addColorStop(0, '#c9ad88'); g.addColorStop(0.5, '#6a4a30'); g.addColorStop(1, '#2a1a10'); x.fillStyle = g; x.fillRect(0, 0, 256, 128);
+  const w = x.createRadialGradient(96, 40, 4, 96, 40, 60); w.addColorStop(0, 'rgba(255,246,225,1)'); w.addColorStop(0.35, 'rgba(255,230,190,0.8)'); w.addColorStop(1, 'rgba(255,220,170,0)'); x.fillStyle = w; x.fillRect(0, 0, 256, 128);
+  x.fillStyle = 'rgba(255,250,235,.95)'; x.fillRect(80, 24, 32, 30); // the window pane itself
+  const t = new THREE.CanvasTexture(c); t.mapping = THREE.EquirectangularReflectionMapping; t.colorSpace = THREE.SRGBColorSpace; return t;
+})();
+{ const pm = new THREE.PMREMGenerator(renderer); scene.environment = pm.fromEquirectangular(envTex).texture; pm.dispose(); }
+scene.environmentIntensity = 0.6;
 
 // dust motes in the window light: soft round sprites as Points
 function softSprite() { const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d'); const g = x.createRadialGradient(32, 32, 0, 32, 32, 32); g.addColorStop(0, 'rgba(255,245,220,1)'); g.addColorStop(0.4, 'rgba(255,245,220,0.5)'); g.addColorStop(1, 'rgba(255,245,220,0)'); x.fillStyle = g; x.fillRect(0, 0, 64, 64); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; }
@@ -1413,7 +1612,10 @@ const G = {
   hangSlot: 0, settingsFrom: 'title', lastDir: [0, 1], hidden: false,
   // v2
   thick: 1, hintUsed: false, coach: false, crit: [], tier: 0, lastSaved: -1,
+  ripples: [], // redesign: rings on the water where drops fell
 };
+const TOOLFX = { bob: 0 }; // the brush dips when it sprinkles
+function addRipple(x, y, r) { G.ripples.push({ x, y, r, t: 0 }); if (G.ripples.length > 40) G.ripples.shift(); TOOLFX.bob = 1; G.ovDirty = true; }
 const tools = () => G.free ? THICK[G.thick] : TOOL; // the tool table in force: thickness applies to the free tray only
 function redrawTray() { renderPaint(G.sim); G.dirtyTex = false; }
 function computeMatch() {
@@ -1462,6 +1664,12 @@ function drawOverlayNow() {
     // start marker
     c.globalAlpha = 1; c.fillStyle = '#d9a441'; c.beginPath(); c.arc(p[0][0], p[0][1], 11, 0, Math.PI * 2); c.fill();
   }
+  // ripples: two rings spreading from every drop, fading as they go
+  if (G.ripples.length) {
+    c.setLineDash([]);
+    for (const rp of G.ripples) { const f = rp.t / 0.7; c.globalAlpha = (1 - f) * 0.55; c.lineWidth = 3 - f * 2; c.strokeStyle = 'rgba(255,255,255,0.9)'; c.beginPath(); c.arc(rp.x, rp.y, rp.r + 6 + f * 70, 0, Math.PI * 2); c.stroke(); c.globalAlpha = (1 - f) * 0.3; c.beginPath(); c.arc(rp.x, rp.y, rp.r + 2 + f * 40, 0, Math.PI * 2); c.stroke(); }
+    c.globalAlpha = 1;
+  }
   // cursor
   if (G.hover && G.state === 'play' && !G.paused && !isPhone) {
     const h = G.hover; c.globalAlpha = 0.9; c.setLineDash([]); c.lineWidth = 2.5; c.strokeStyle = 'rgba(255,255,255,0.9)';
@@ -1483,7 +1691,7 @@ function startStroke(x, y) {
   x = clampS(x, 2, SW - 2); y = clampS(y, 2, SH - 2);
   G.undo.push({ snap: G.sim.snapshot(), strokes: G.strokes.slice() }); if (G.undo.length > 12) G.undo.shift();
   G.stroke = { k: G.tool, c: G.colour, p: [[x, y]] }; G.runner = new StrokeRunner(G.sim, tools());
-  const ev = G.runner.begin(G.stroke, x, y); for (const e of ev) sfxDrip(e.r);
+  const ev = G.runner.begin(G.stroke, x, y); for (const e of ev) { sfxDrip(e.r); addRipple(e.x, e.y, e.r); }
   if (G.tool === 'biz' || G.tool === 'tarak') swishStart();
   G.dirtyTex = true; G.pressing = true;
   if (G.coach) hideCoach();
@@ -1495,7 +1703,7 @@ function moveStroke(x, y) {
   if (d < 0.5) return;
   if (d > 1) G.lastDir = [dx / d, dy / d];
   G.stroke.p.push([x, y]); const before = G.runner.s.n; const ev = G.runner.move(x, y);
-  for (const e of ev) sfxDrip(e.r);
+  for (const e of ev) { sfxDrip(e.r); addRipple(e.x, e.y, e.r); }
   if (G.runner.s.n !== before) { G.dirtyTex = true; G.matchDirty = true; }
   if (AUD.swish) swishLevel(d * 60, G.tool === 'tarak');
 }
@@ -1569,7 +1777,7 @@ function layPaper() {
   if (G.state !== 'play' || G.paused || G.stroke) return;
   if (!G.sim.polys.length) { toast(t('emptyTray'), 'bad'); return; }
   G.state = 'laying'; G.lay = { t: 0, captured: false }; G.hint = null; clearPulse(); $('bLay').classList.remove('pulse'); hideCoach(); $('crit').hidden = true; redrawOverlay();
-  sheet.material.map = paperTex; sheet.material.needsUpdate = true; sheet.visible = true; sheet.position.set(0, TRAY_Y + 0.5, 0); sheet.rotation.set(-Math.PI / 2, 0, 0);
+  setSheetMap(paperTex); sheet.visible = true; sheet.position.set(0, TRAY_Y + 0.5, 0); sheet.rotation.set(-Math.PI / 2, 0, 0);
   sfxPaper(false); toast(t('laid'));
 }
 function captureSheet() {
@@ -1579,8 +1787,7 @@ function captureSheet() {
   const cp = paintToCanvas(512, 384);
   G.sheetCanvas = cp;
   const tex = new THREE.CanvasTexture(cp); tex.colorSpace = THREE.SRGBColorSpace;
-  if (sheet.material.map && sheet.material.map !== paperTex) sheet.material.map.dispose();
-  sheet.material.map = tex; sheet.material.needsUpdate = true;
+  setSheetMap(tex);
   G.sim.clear(); G.dirtyTex = true; G.lastResult = { match: m, strokes: G.strokes.length, crit: G.crit.slice(), hintUsed: G.hintUsed };
   setHangingTexture(G.hangSlot++ % 3, cp);
   sfxPaper(true);
@@ -1612,13 +1819,19 @@ function pushGallery(canvas, bound) { // keep the plain JPEG; the cover is recom
   while (GALLERY.length > 12) { GALLERY.shift(); BOUND.shift(); full = true; }
   saveGallery(); G.lastSaved = GALLERY.length - 1; return full;
 }
+// the paper is not a board: it bows while it falls and bellies while it is peeled off the water
+function bendSheet(amount) {
+  const p = sheet.geometry.attributes.position, a = p.array;
+  for (let i = 0; i < p.count; i++) { const u = sheetBase[i * 3] / TRAY_W + 0.5; a[i * 3 + 2] = sheetBase[i * 3 + 2] + amount * Math.sin(u * Math.PI); }
+  p.needsUpdate = true; sheet.geometry.computeVertexNormals();
+}
 function stepLay(dt) {
   const L = G.lay; L.t += dt; const tt = L.t;
-  if (tt < 0.7) { const f = tt / 0.7, e = 1 - (1 - f) * (1 - f); sheet.position.y = TRAY_Y + 0.5 * (1 - e) + 0.003; sheet.rotation.set(-Math.PI / 2 + 0.25 * (1 - e), 0, 0); }
-  else if (!L.captured) { L.captured = true; captureSheet(); sheet.position.y = TRAY_Y + 0.003; }
+  if (tt < 0.7) { const f = tt / 0.7, e = 1 - (1 - f) * (1 - f); sheet.position.y = TRAY_Y + 0.5 * (1 - e) + 0.003; sheet.rotation.set(-Math.PI / 2 + 0.25 * (1 - e), 0, 0); bendSheet(0.04 * (1 - e)); }
+  else if (!L.captured) { L.captured = true; captureSheet(); sheet.position.y = TRAY_Y + 0.003; bendSheet(0); }
   else if (tt < 1.0) { /* rest on the water */ }
   else if (tt < 2.2) {
-    const f = (tt - 1.0) / 1.2, e = f * f * (3 - 2 * f);
+    const f = (tt - 1.0) / 1.2, e = f * f * (3 - 2 * f); bendSheet(0.07 * Math.sin(f * Math.PI));
     const toward = CAM.portrait ? new THREE.Vector3(1, 0, 0) : new THREE.Vector3(0, 0, 1);
     sheet.position.copy(trayCentre).addScaledVector(toward, 0.12 * e); sheet.position.y = TRAY_Y + 0.003 + 0.42 * e;
     if (CAM.portrait) sheet.rotation.set(-Math.PI / 2, 0, -0.9 * e); else sheet.rotation.set(-Math.PI / 2 + 0.9 * e, 0, 0);
@@ -2021,7 +2234,9 @@ function placeTool() {
   if (G.state !== 'play' || G.paused || !G.hover) return;
   const m = toolMeshes[G.tool]; m.visible = true;
   const wx = (G.hover.x / SW - 0.5) * TRAY_W, wz = (G.hover.y / SH - 0.5) * TRAY_H;
-  m.position.set(wx, TRAY_Y + (G.pressing ? 0.0 : 0.035), wz);
+  const dip = Math.sin(TOOLFX.bob * Math.PI);
+  m.position.set(wx, TRAY_Y + (G.pressing ? 0.0 : 0.035) - dip * 0.012, wz);
+  m.rotation.z = m.userData.rz + (G.tool === 'brush' ? -0.35 : -0.08) * dip;
   if (G.tool === 'tarak') { const [dx, dy] = G.lastDir; m.rotation.y = Math.atan2(-dx, -dy); }
 }
 function tick(dt) {
@@ -2029,8 +2244,17 @@ function tick(dt) {
   botStep(dt);
   if (G.state === 'laying' && G.lay) stepLay(dt);
   if (G.hint !== null) { G.hintT += dt; G.ovDirty = true; }
+  if (G.ripples.length) { for (const rp of G.ripples) rp.t += dt; G.ripples = G.ripples.filter(rp => rp.t < 0.7); G.ovDirty = true; }
+  if (TOOLFX.bob > 0.001) TOOLFX.bob *= Math.exp(-dt * 7); else TOOLFX.bob = 0;
   if (G.matchDirty && G.state === 'play' && !G.free && G.time - G.matchAt > 0.25) { G.matchAt = G.time; computeMatch(); updateHud(); }
-  if (!G.simming) { stepDust(dt); stepMascot(dt); }
+  if (!G.simming) { stepDust(dt); stepMascot(dt); stepLamp(); stepRoom(dt); }
+}
+function stepLamp() { const f = Math.sin(G.time * 9.1) * 0.08 + Math.sin(G.time * 23.7) * 0.05; lamp.intensity = 0.85 + f; flame.scale.set(0.03 + f * 0.1, 0.055 + f * 0.25, 1); flame.position.x = 0.76 + Math.sin(G.time * 13) * 0.0015; }
+// the drying sheets sway a little in the draught from the window
+function stepRoom(dt) {
+  hanging.forEach((m, i) => { m.rotation.y = Math.sin(G.time * 0.7 + i * 2.1) * 0.05; m.rotation.x = Math.sin(G.time * 0.9 + i) * 0.03; });
+  rippleTex.offset.x += dt * 0.012; rippleTex.offset.y -= dt * 0.007; // the size (kitre) creeps, so the window's reflection shimmers
+  shaft.material.opacity = 0.45 + Math.sin(G.time * 0.5) * 0.06;
 }
 function exportState() {
   Object.assign(window.ebru, {
