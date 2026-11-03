@@ -164,7 +164,7 @@ input[type=range]{flex:1;accent-color:var(--blue);height:44px;margin:0}
 .seg button.on{background:var(--blue);color:#fff}
 .lbl{width:96px;font-size:14px;color:var(--ink2)}
 .footer{margin-top:14px;font-size:12px;color:var(--ink2);text-align:center;border-top:1px solid var(--rule);padding-top:10px}
-.footer a{color:var(--blue2);text-decoration:none}
+.footer a{color:#104a7a;text-decoration:none} /* a11y: >=4.5:1 contrast on paper */
 .footer a:hover{text-decoration:underline}
 
 /* title */
@@ -220,7 +220,7 @@ input[type=range]{flex:1;accent-color:var(--blue);height:44px;margin:0}
 .galgrid figure{margin:0;position:relative;padding:4px 4px 10px;background:#fbf7ee;box-shadow:0 2px 6px rgba(0,0,0,.3);transform:rotate(-.6deg)}
 .galgrid figure:nth-child(2n){transform:rotate(.7deg)}
 .galgrid img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:1px;display:block;background:#e9e2cf}
-.galgrid button{position:absolute;right:8px;top:8px;width:34px;height:34px;border-radius:3px;border:0;background:rgba(42,32,22,.7);color:#fff;display:flex;align-items:center;justify-content:center;padding:0}
+.galgrid button{position:absolute;right:8px;top:8px;width:34px;height:34px;min-width:44px;min-height:44px;border-radius:3px;border:0;background:rgba(42,32,22,.7);color:#fff;display:flex;align-items:center;justify-content:center;padding:0} /* a11y: 44x44 touch target */
 .galgrid button i[data-icon]{width:16px;height:16px}
 .empty{color:var(--ink2);font-size:14px;text-align:center;padding:20px 0}
 
@@ -259,7 +259,7 @@ input[type=range]{flex:1;accent-color:var(--blue);height:44px;margin:0}
 #dbg{position:fixed;left:8px;bottom:calc(8px + var(--sa-b));font:12px/1.4 ui-monospace,Consolas,monospace;color:#9f9;background:rgba(0,0,0,.65);
   padding:6px 8px;white-space:pre;pointer-events:none;z-index:60;border-radius:6px;max-width:92vw;overflow:hidden}
 #dbg .err{color:#f66}
-@media (prefers-reduced-motion:reduce){.sealchip:not(.off) .seal,.pulse{animation:none}}
+@media (prefers-reduced-motion:reduce){.sealchip:not(.off) .seal,.pulse{animation:none!important}} /* a11y: beat .ibtn.pulse/.tbtn.pulse specificity */
 </style>
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}
@@ -2059,7 +2059,7 @@ function applyTexts() {
   for (const el of document.querySelectorAll('[data-tt]')) { el.title = t(el.dataset.tt); el.setAttribute('aria-label', t(el.dataset.tt)); }
   $('bLang').textContent = SET.lang.toUpperCase(); $('bLang2').textContent = SET.lang === 'tr' ? 'English' : 'Türkçe';
   for (const b of document.querySelectorAll('#toolGrp .tbtn')) { b.title = t(b.dataset.tool); b.setAttribute('aria-label', t(b.dataset.tool)); }
-  for (const b of document.querySelectorAll('#swatches .sw')) { b.title = PAL[+b.dataset.c][SET.lang]; }
+  for (const b of document.querySelectorAll('#swatches .sw')) { const nm = PAL[+b.dataset.c][SET.lang]; b.title = nm; b.setAttribute('aria-label', nm); }
   if (G.L && (G.state === 'play' || G.state === 'laying')) $('hLesson').textContent = `${G.L.index + 1}. ${G.L.name[SET.lang]}`;
   if (G.free && G.state === 'play') $('hLesson').textContent = t('freeTitle');
   if (G.state === 'map') buildMap(); if (G.state === 'title') refreshTitle(); if (G.coach) showCoach(false);
