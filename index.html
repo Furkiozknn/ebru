@@ -763,6 +763,7 @@ function mulberry(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5
 const clampS = (v, lo, hi) => v < lo ? lo : v > hi ? hi : v;
 // exp(-x) lookup for x in [0, 8), 256 entries per unit
 const EXPT = new Float32Array(2050); for (let i = 0; i < EXPT.length; i++) EXPT[i] = Math.exp(-i / 256);
+const _resampleScratch = []; // perf: scratch buffer reused by Marble.resample
 
 class Marble {
   constructor() { this.polys = []; this.maxLen = 7; this.minLen = 2; this.points = 0; this.rev = 0; }
@@ -859,7 +860,8 @@ class Marble {
     for (let i = 0; i < n && !need; i++) { const j = (i + 1) % n, dx = a[j * 2] - a[i * 2], dy = a[j * 2 + 1] - a[i * 2 + 1], d2 = dx * dx + dy * dy; if (d2 > maxL2 || d2 < minL2) need = true; }
     p.minx = minx; p.miny = miny; p.maxx = maxx; p.maxy = maxy;
     if (!need) return;
-    const out = []; let px = a[(n - 1) * 2], py = a[(n - 1) * 2 + 1];
+    // perf: reuse scratch buffer and typed array in place to avoid per-stroke GC spikes
+    const out = _resampleScratch; out.length = 0; let px = a[(n - 1) * 2], py = a[(n - 1) * 2 + 1];
     for (let i = 0; i < n; i++) {
       const x0 = a[i * 2], y0 = a[i * 2 + 1], ddx = x0 - px, ddy = y0 - py;
       if (ddx * ddx + ddy * ddy < minL2) continue; // too close to the previous kept point
@@ -868,7 +870,10 @@ class Marble {
       if (d > maxL) { const k = Math.ceil(d / maxL); for (let s = 1; s < k; s++) out.push(x0 + (x1 - x0) * s / k, y0 + (y1 - y0) * s / k); }
       px = x0; py = y0;
     }
-    p.pts = Float32Array.from(out); p.n = out.length / 2;
+    const len = out.length;
+    if (p.pts && p.pts.length >= len) { p.pts.set(out); }
+    else { p.pts = new Float32Array(Math.max(len, ((p.pts ? p.pts.length : 0) * 1.5) | 0)); p.pts.set(out); }
+    p.n = len / 2;
   }
   // draw into a 2D context; `scale` maps sim units to canvas pixels
   draw(ctx, scale, palette, outline) {
@@ -1382,14 +1387,16 @@ for (let k = 0; k < PAL.length; k++) {
   fanMats.push(new THREE.MeshBasicMaterial({ color: PAL[k].hex, side: THREE.DoubleSide, depthTest: false, depthWrite: false, stencilWrite: true, stencilFunc: THREE.NotEqualStencilFunc, stencilRef: 0, stencilZPass: THREE.ZeroStencilOp, stencilFail: THREE.ZeroStencilOp }));
 }
 const fans = new THREE.Mesh(fanGeo, fanMats); fans.frustumCulled = false; paintScene.add(fans);
+// perf: preallocated bucket arrays for buildFans to avoid per-frame allocations during paint
+const fanByC = Array.from({ length: PAL.length }, () => []);
 function buildFans(sim) {
-  const byC = []; for (let k = 0; k < PAL.length; k++) byC.push([]);
-  for (const p of sim.polys) if (p.n >= 3) byC[p.c].push(p);
+  for (let k = 0; k < PAL.length; k++) fanByC[k].length = 0;
+  for (const p of sim.polys) if (p.n >= 3) fanByC[p.c].push(p);
   const pos = fanPos.array, idx = fanIdx.array; let v = 0, ix = 0; fanGeo.clearGroups();
   for (let k = 0; k < PAL.length; k++) {
-    if (!byC[k].length) continue;
+    const list = fanByC[k]; if (!list.length) continue;
     const start = ix; let minx = 1e9, miny = 1e9, maxx = -1e9, maxy = -1e9;
-    for (const p of byC[k]) {
+    for (const p of list) {
       const a = p.pts, n = p.n, base = v; if (v + n + 4 > CAP_V || ix + (n - 2) * 3 + 6 > CAP_I) break;
       for (let i = 0; i < n; i++) { pos[(v + i) * 3] = a[i * 2]; pos[(v + i) * 3 + 1] = a[i * 2 + 1]; pos[(v + i) * 3 + 2] = 0; }
       for (let i = 1; i < n - 1; i++) { idx[ix++] = base; idx[ix++] = base + i; idx[ix++] = base + i + 1; }
@@ -1398,8 +1405,12 @@ function buildFans(sim) {
     if (ix === start) continue;
     fanGeo.addGroup(start, ix - start, k * 3); fanGeo.addGroup(start, ix - start, k * 3 + 1);
     // the colour quad: the colour's bounding box, a little wider for the antialiased edge
-    minx -= 2; miny -= 2; maxx += 2; maxy += 2; const q = v;
-    pos.set([minx, miny, 0, maxx, miny, 0, maxx, maxy, 0, minx, maxy, 0], q * 3); v += 4;
+    minx -= 2; miny -= 2; maxx += 2; maxy += 2; const q = v, q3 = q * 3;
+    pos[q3] = minx; pos[q3 + 1] = miny; pos[q3 + 2] = 0;
+    pos[q3 + 3] = maxx; pos[q3 + 4] = miny; pos[q3 + 5] = 0;
+    pos[q3 + 6] = maxx; pos[q3 + 7] = maxy; pos[q3 + 8] = 0;
+    pos[q3 + 9] = minx; pos[q3 + 10] = maxy; pos[q3 + 11] = 0;
+    v += 4;
     const qs = ix; idx[ix++] = q; idx[ix++] = q + 1; idx[ix++] = q + 2; idx[ix++] = q; idx[ix++] = q + 2; idx[ix++] = q + 3;
     fanGeo.addGroup(qs, 6, k * 3 + 2);
   }
@@ -1636,6 +1647,7 @@ function rimGlow() { const r = $('rim'); r.classList.add('on'); clearTimeout(rim
 // Overlay: hint ghost and tool cursor
 // ---------------------------------------------------------------------------
 function redrawOverlay() { G.ovDirty = true; }
+const _hintSegs = []; // perf: reuse segment scratch array for hint overlay
 function drawOverlayNow() {
   const c = ovCtx, s = 512 / SW; c.clearRect(0, 0, 512, 384); c.save(); c.scale(s, s);
   if (G.hint !== null && G.L && G.hint < G.L.strokes.length) {
@@ -1655,7 +1667,7 @@ function drawOverlayNow() {
       }
     }
     // moving dot along the path
-    let total = 0; const segs = []; for (let i = 1; i < p.length; i++) { const d = Math.hypot(p[i][0] - p[i - 1][0], p[i][1] - p[i - 1][1]); segs.push(d); total += d; }
+    let total = 0; const segs = _hintSegs; segs.length = 0; for (let i = 1; i < p.length; i++) { const d = Math.hypot(p[i][0] - p[i - 1][0], p[i][1] - p[i - 1][1]); segs.push(d); total += d; }
     if (total > 0) {
       let d = (G.hintT * 500) % total, i = 0; while (i < segs.length - 1 && d > segs[i]) { d -= segs[i]; i++; }
       const f = segs[i] ? d / segs[i] : 0, x = p[i][0] + (p[i + 1][0] - p[i][0]) * f, y = p[i][1] + (p[i + 1][1] - p[i][1]) * f;
@@ -1820,6 +1832,7 @@ function pushGallery(canvas, bound) { // keep the plain JPEG; the cover is recom
   saveGallery(); G.lastSaved = GALLERY.length - 1; return full;
 }
 // the paper is not a board: it bows while it falls and bellies while it is peeled off the water
+const towardP = new THREE.Vector3(1, 0, 0), towardL = new THREE.Vector3(0, 0, 1); // perf: reuse vectors for stepLay
 function bendSheet(amount) {
   const p = sheet.geometry.attributes.position, a = p.array;
   for (let i = 0; i < p.count; i++) { const u = sheetBase[i * 3] / TRAY_W + 0.5; a[i * 3 + 2] = sheetBase[i * 3 + 2] + amount * Math.sin(u * Math.PI); }
@@ -1832,7 +1845,7 @@ function stepLay(dt) {
   else if (tt < 1.0) { /* rest on the water */ }
   else if (tt < 2.2) {
     const f = (tt - 1.0) / 1.2, e = f * f * (3 - 2 * f); bendSheet(0.07 * Math.sin(f * Math.PI));
-    const toward = CAM.portrait ? new THREE.Vector3(1, 0, 0) : new THREE.Vector3(0, 0, 1);
+    const toward = CAM.portrait ? towardP : towardL;
     sheet.position.copy(trayCentre).addScaledVector(toward, 0.12 * e); sheet.position.y = TRAY_Y + 0.003 + 0.42 * e;
     if (CAM.portrait) sheet.rotation.set(-Math.PI / 2, 0, -0.9 * e); else sheet.rotation.set(-Math.PI / 2 + 0.9 * e, 0, 0);
   } else { sheet.visible = false; G.lay = null; finishSheet(); }
@@ -2244,7 +2257,11 @@ function tick(dt) {
   botStep(dt);
   if (G.state === 'laying' && G.lay) stepLay(dt);
   if (G.hint !== null) { G.hintT += dt; G.ovDirty = true; }
-  if (G.ripples.length) { for (const rp of G.ripples) rp.t += dt; G.ripples = G.ripples.filter(rp => rp.t < 0.7); G.ovDirty = true; }
+  if (G.ripples.length) {
+    let kept = 0;
+    for (let i = 0; i < G.ripples.length; i++) { const rp = G.ripples[i]; rp.t += dt; if (rp.t < 0.7) G.ripples[kept++] = rp; }
+    G.ripples.length = kept; G.ovDirty = true;
+  }
   if (TOOLFX.bob > 0.001) TOOLFX.bob *= Math.exp(-dt * 7); else TOOLFX.bob = 0;
   if (G.matchDirty && G.state === 'play' && !G.free && G.time - G.matchAt > 0.25) { G.matchAt = G.time; computeMatch(); updateHud(); }
   if (!G.simming) { stepDust(dt); stepMascot(dt); stepLamp(); stepRoom(dt); }
@@ -2252,7 +2269,7 @@ function tick(dt) {
 function stepLamp() { const f = Math.sin(G.time * 9.1) * 0.08 + Math.sin(G.time * 23.7) * 0.05; lamp.intensity = 0.85 + f; flame.scale.set(0.03 + f * 0.1, 0.055 + f * 0.25, 1); flame.position.x = 0.76 + Math.sin(G.time * 13) * 0.0015; }
 // the drying sheets sway a little in the draught from the window
 function stepRoom(dt) {
-  hanging.forEach((m, i) => { m.rotation.y = Math.sin(G.time * 0.7 + i * 2.1) * 0.05; m.rotation.x = Math.sin(G.time * 0.9 + i) * 0.03; });
+  for (let i = 0; i < hanging.length; i++) { const m = hanging[i]; m.rotation.y = Math.sin(G.time * 0.7 + i * 2.1) * 0.05; m.rotation.x = Math.sin(G.time * 0.9 + i) * 0.03; }
   rippleTex.offset.x += dt * 0.012; rippleTex.offset.y -= dt * 0.007; // the size (kitre) creeps, so the window's reflection shimmers
   shaft.material.opacity = 0.45 + Math.sin(G.time * 0.5) * 0.06;
 }
