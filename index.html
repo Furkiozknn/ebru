@@ -3891,7 +3891,15 @@ addEventListener('keydown', e => {
   else if (k === 't' && G.free && !G.nefes) setThick((G.thick + 1) % 3);
   else if (k === 'b' && G.free && !G.nefes) bindLastFree();
 });
-document.addEventListener('visibilitychange', () => { G.hidden = document.hidden; if (document.hidden && G.stroke) endStroke(); });
+document.addEventListener('visibilitychange', () => {
+  G.hidden = document.hidden;
+  if (document.hidden) {
+    if (G.stroke) endStroke();
+    if (AUD.ctx && AUD.ctx.state === 'running') AUD.ctx.suspend().catch(() => {});
+  } else {
+    if (AUD.ctx && AUD.ctx.state === 'suspended') AUD.ctx.resume().catch(() => {});
+  }
+});
 
 // buttons
 $('bPlay').addEventListener('click', () => { bootAudio(); sfxClick(); playNext(); });
