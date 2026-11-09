@@ -3835,7 +3835,13 @@ const pointers = new Map(); let strokePointer = null, pinch = null;
 canvas.addEventListener('pointerdown', e => {
   bootAudio(); canvas.focus();
   pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-  if (pointers.size === 2) { if (G.stroke) endStroke(); strokePointer = null; const [a, b] = [...pointers.values()]; pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), z: CAM.zoom }; return; }
+  if (pointers.size >= 2) {
+    if (G.stroke) endStroke();
+    strokePointer = null;
+    const [a, b] = [...pointers.values()];
+    pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), z: CAM.zoom };
+    return;
+  }
   if (G.state !== 'play' || G.paused || G.stroke) return;
   const p = toSim(e.clientX, e.clientY); if (!inTray(p, 40)) return;
   try { canvas.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
@@ -3843,7 +3849,17 @@ canvas.addEventListener('pointerdown', e => {
 });
 canvas.addEventListener('pointermove', e => {
   if (pointers.has(e.pointerId)) pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-  if (pinch && pointers.size === 2) { const [a, b] = [...pointers.values()]; const d = Math.hypot(a.x - b.x, a.y - b.y); CAM.zoom = clampS(pinch.z * pinch.d / Math.max(1, d), 0.55, 1.4); fitCamera(); return; }
+  if (pointers.size >= 2) {
+    if (G.stroke) endStroke();
+    strokePointer = null;
+    const [a, b] = [...pointers.values()];
+    const d = Math.hypot(a.x - b.x, a.y - b.y);
+    if (pinch) {
+      CAM.zoom = clampS(pinch.z * pinch.d / Math.max(1, d), 0.55, 1.4);
+      fitCamera();
+    }
+    return;
+  }
   const p = toSim(e.clientX, e.clientY);
   G.hover = inTray(p, 60) ? p : null;
   if (G.stroke && e.pointerId === strokePointer && p) moveStroke(p.x, p.y);
