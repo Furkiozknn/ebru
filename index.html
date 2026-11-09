@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Ebru</title>
+<meta name="arena-game" content="ebru">
 <meta name="description" content="A 3D paper-marbling art puzzle: sprinkle, comb and shape paint on thickened water, earn the master's seal, then lay the paper. Plays in the browser.">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Ebru">
@@ -1364,6 +1365,12 @@ input[type=range] {
     animation: none !important;
   }
 }
+/* the same rule when "Reduce motion" is on in the Arena accessibility panel (html[data-arena-reduced-motion]) */
+html[data-arena-reduced-motion] :is(.sealchip:not(.off) .seal, .pulse, .pressbox .sheetimg.reveal, .pressbox .pstamp.reveal) {
+  animation: none !important;
+}
+#title .daily small { font-weight: 500; opacity: 0.8; }
+a.btn { text-decoration: none; }
 </style>
 <script>/*ARENA-KIT:BEGIN v1.0.0 sha256:a9b9a8b52b3e*/
 /* ARENA-KIT v1 — shared layer for the 21 Claude Game Arena games.
@@ -1792,6 +1799,7 @@ input[type=range] {
         <button class="btn" id="bFree"><i data-icon="brush"></i><span data-t="free"></span></button>
         <button class="btn" id="bGal2"><i data-icon="gallery"></i><span data-t="gallery"></span></button>
         <button class="btn" id="bNefes"><i data-icon="breath"></i><span data-t="nefes"></span></button>
+        <button class="btn daily" id="bDaily"><i data-icon="sun"></i><span data-t="daily"></span> <small id="dailyInfo"></small></button>
         <button class="btn" id="bWall"><i data-icon="wall"></i><span data-t="wall"></span></button>
         <button class="btn" id="bSettings"><i data-icon="gear"></i><span data-t="settings"></span></button>
         <button class="btn" id="bLang2">EN</button>
@@ -1838,6 +1846,7 @@ input[type=range] {
     <div class="row"><span class="lbl" data-t="language"></span><div class="seg" id="segLang"><button data-v="tr">Türkçe</button><button data-v="en">English</button></div></div>
     <div class="row"><span class="lbl" data-t="quality"></span><div class="seg" id="segQ"><button data-v="low" data-t="low"></button><button data-v="high" data-t="high"></button></div></div>
     <div class="row"><span class="lbl" data-t="fullscreen"></span><button class="btn" id="bFull"><i data-icon="full"></i><span data-t="fullscreen"></span></button></div>
+    <button class="btn w" id="bA11y"><span data-t="a11y"></span></button>
     <button class="btn primary w" id="bSetBack" style="margin-top:6px"><span data-t="back"></span></button>
   </div>
 </div>
@@ -1847,6 +1856,7 @@ input[type=range] {
   <div class="panel glass wide">
     <div class="rhead"><h2 class="serif" id="rTitle"></h2><div class="bigstars" id="rStars"></div><img class="cat" id="rCat" alt="" hidden></div>
     <p class="rec" id="rRec" hidden></p>
+    <p class="rec" id="rDaily" hidden></p>
     <div class="two">
       <div><canvas class="sheetimg" id="rSheet" width="400" height="300"></canvas><p class="cap" id="rSheetCap"></p></div>
       <div id="rTargetWrap"><canvas class="sheetimg" id="rTarget" width="400" height="300"></canvas><p class="cap" data-t="target"></p></div>
@@ -1856,6 +1866,7 @@ input[type=range] {
     <div class="row" id="rSealRow" style="margin:8px 0"></div>
     <p class="fact" id="rFact"></p>
     <div class="row end">
+      <button class="btn" id="bRShare"><i data-icon="share"></i><span data-t="share"></span></button>
       <button class="btn" id="bBind"><i data-icon="bind"></i><span data-t="bind"></span></button>
       <button class="btn" id="bRMap"><span data-t="lessons"></span></button>
       <button class="btn" id="bRetry"><i data-icon="reset"></i><span data-t="retry"></span></button>
@@ -1881,6 +1892,8 @@ input[type=range] {
     <div class="pressbox"><canvas class="sheetimg" id="pSheet" width="512" height="384"></canvas><span class="pstamp" id="pStamp"></span></div>
     <div class="kv" id="pKv"></div>
     <div class="row end" style="margin-top:8px">
+      <a class="btn" id="aPOther" href="https://furkiozknn.github.io/" target="_blank" rel="noopener"><span data-t="another"></span></a>
+      <button class="btn" id="bPShare"><i data-icon="share"></i><span data-t="share"></span></button>
       <button class="btn" id="bPWall"><i data-icon="wall"></i><span data-t="wall"></span></button>
       <button class="btn" id="bPHome"><span data-t="mainMenu"></span></button>
       <button class="btn primary" id="bPAgain"><i data-icon="breath"></i><span data-t="nefesAgain"></span></button>
@@ -1911,6 +1924,8 @@ input[type=range] {
     <div class="kv" id="eKv"></div>
     <div class="col">
       <button class="btn primary w" id="bEFree"><i data-icon="brush"></i><span data-t="free"></span></button>
+      <button class="btn w" id="bEShare"><i data-icon="share"></i><span data-t="share"></span></button>
+      <a class="btn w" id="aEOther" href="https://furkiozknn.github.io/" target="_blank" rel="noopener"><span data-t="another"></span></a>
       <button class="btn w" id="bEMenu"><span data-t="mainMenu"></span></button>
     </div>
   </div>
@@ -1954,6 +1969,9 @@ const FLAG = {
   lang: Q.get('lang'), nosave: Q.has('nosave'), lesson: parseInt(Q.get('lesson') || '0', 10) || 0, noassets: Q.has('noassets'),
   free: Q.has('free'), botJitter: parseFloat(Q.get('jitter') || '6') || 0,
 };
+// Arena shared layer (inline classic script above the import map); every use below is optional
+const ARENA = window.Arena && window.Arena.version ? window.Arena : null;
+const ARENA_URL = 'https://furkiozknn.github.io/ebru/';
 // Every mesh, texture and sound is generated in code; the only files are the three mascot PNGs (v2), loaded after the
 // first frame and skipped with ?noassets (or on file://, where WebGL cannot read a local image).
 const ASSETS = { used: !FLAG.noassets, loaded: [], failed: [], skipped: FLAG.noassets, note: 'mascot PNGs only, everything else procedural' };
@@ -2036,6 +2054,11 @@ const I18N = {
     nefesAgain: 'Bir nefes daha', wall: 'Galeri duvarı', wallEmpty: 'Duvar boş. Tek Nefes\'te bir kâğıt bas; son 12 baskı burada asılı kalır.',
     wallCount: '{n}/12 baskı', wallSaved: 'Baskı galeri duvarına asıldı', wallFull: 'Duvar dolu: en eski baskı indirildi', wallFail: 'Baskı kaydedilemedi: tarayıcı depolaması kapalı',
     breathsLbl: 'Nefes', secsLbl: 'Saniye', dropsLbl: 'Damla', secsN: '{n} sn',
+    // Arena (ortak katman): günlük, paylaş, erişilebilirlik, rozetler
+    daily: 'Günün Meydan Okuması', dailyLesson: 'Günün dersi: {n}', dailyStreak: 'Seri {s} gün · en iyi {b}', dailyDone: 'bugün tamam',
+    dailyNote: 'Günlük derste yıldız ve mühür ders haritasına yazılmaz.', share: 'Paylaş', another: 'Başka oyun', a11y: 'Erişilebilirlik',
+    shareLesson: 'Ders {n} · %{m} uyum · {s}/3 yıldız', shareDaily: 'Günün Meydan Okuması {d} · seri {s}', shareNefes: 'Tek Nefes · {b}/{m} nefes · {sec} sn',
+    shareEnd: '18/18 ders · {s}/54 yıldız · {n}/18 mühür', badgeFirst: 'İlk ebru', badgeSeal: 'İlk usta mührü', badgeAll: 'Ebru ustası',
   },
   en: {
     subtitle: 'Paint on thickened water, an awl in hand: Turkish paper marbling', play: 'Play', continue: 'Continue', settings: 'Settings', free: 'Free tray', gallery: 'Gallery',
@@ -2076,6 +2099,11 @@ const I18N = {
     nefesAgain: 'One more breath', wall: 'Gallery wall', wallEmpty: 'The wall is empty. Press a sheet in One Breath; the last 12 prints hang here.',
     wallCount: '{n}/12 prints', wallSaved: 'Print hung on the gallery wall', wallFull: 'Wall full: the oldest print came down', wallFail: 'Could not save the print: browser storage is off',
     breathsLbl: 'Breaths', secsLbl: 'Seconds', dropsLbl: 'Drops', secsN: '{n} s',
+    // Arena (shared layer): daily, share, accessibility, badges
+    daily: 'Daily challenge', dailyLesson: 'Today\'s lesson: {n}', dailyStreak: 'Streak {s} days · best {b}', dailyDone: 'done today',
+    dailyNote: 'Stars and seals from the daily lesson do not go on the lesson map.', share: 'Share', another: 'Another game', a11y: 'Accessibility',
+    shareLesson: 'Lesson {n} · {m}% match · {s}/3 stars', shareDaily: 'Daily challenge {d} · streak {s}', shareNefes: 'One Breath · {b}/{m} breaths · {sec} s',
+    shareEnd: '18/18 lessons · {s}/54 stars · {n}/18 seals', badgeFirst: 'First ebru', badgeSeal: 'First master\'s seal', badgeAll: 'Ebru master',
   },
 };
 const t = (k, vars) => { let s = (I18N[SET.lang] || I18N.tr)[k]; if (s === undefined) s = k; if (vars) for (const v in vars) s = s.replace('{' + v + '}', vars[v]); return s; };
@@ -2108,6 +2136,8 @@ const ICON = {
   bind: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M5 17a3 3 0 0 1 3-3h11"/><path d="M9 8h6"/><circle cx="7" cy="10" r="1" fill="currentColor"/></svg>',
   // Tek Nefes: a breath leaving the lips in three strokes; the gallery wall: three framed prints on a nail line
   breath: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 9h10a3 3 0 1 0-3-3"/><path d="M3 13h14a3 3 0 1 1-3 3"/><path d="M3 17h6"/><circle cx="20" cy="9" r="1" fill="currentColor"/></svg>',
+  share: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M8.2 10.8l7.6-3.6M8.2 13.2l7.6 3.6"/></svg>',
+  sun: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/></svg>',
   wall: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M2 5h20"/><rect x="3" y="8" width="5" height="7"/><rect x="9.5" y="8" width="5" height="9"/><rect x="16" y="8" width="5" height="6"/><circle cx="12" cy="12.5" r="1" fill="currentColor"/></svg>',
   // the master's seal: red wax disc with fine pierced ring and calligraphic tulip
   seal: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10.5" fill="#A8321D"/><circle cx="12" cy="12" r="8.5" fill="none" stroke="#F2D8A7" stroke-width="0.9" stroke-dasharray="1.5 1.5"/><path d="M12 17.5V11" stroke="#F2D8A7" stroke-width="1.5" stroke-linecap="round"/><path d="M12 11.5c-2.4-1-3.2-3.6-2-5.6.8 1.4 1.5 1.8 2 2.9.5-1.1 1.2-1.5 2-2.9 1.2 2 .4 4.6-2 5.6z" fill="#F2D8A7"/></svg>',
@@ -2711,6 +2741,9 @@ function buildTarget(L) {
 const canvas = document.getElementById('c');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
 renderer.setPixelRatio(Math.min(devicePixelRatio || 1, SET.quality === 'low' ? 1 : 1.5));
+// Arena: dynamic pixel ratio for weak GPUs, capped at the quality tier's ratio (re-attached in setQuality)
+const arenaPerfMax = q => Math.min(devicePixelRatio || 1, q === 'low' ? 1 : 1.5);
+let arenaPerf = ARENA ? ARENA.perf.attach(renderer, { max: arenaPerfMax(SET.quality) }) : null;
 renderer.shadowMap.enabled = SET.quality !== 'low'; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 // Redesign (2026-11) palette: ink & paper fine art. Walnut wood, cream paper, lime plaster, ebru blue, red ochre wax,
@@ -3172,6 +3205,8 @@ const G = {
   thick: 1, hintUsed: false, coach: false, crit: [], tier: 0, lastSaved: -1,
   ripples: [], // redesign: rings on the water where drops fell
   nefes: null, // Tek Nefes round state (beginNefes), null in the lessons and the free tray
+  daily: null, // Arena.daily() of the running daily challenge lesson, null otherwise
+  share: null, // what the Share button on the open end screen shares
 };
 // Tek Nefes limits: a 60 s clock from the first drop, 4 breaths; each breath is one drop placement (a brush sprinkle of
 // at most 9 drops, or one big drop) followed by one pass (comb or awl, at most 1100 units, about one tray length).
@@ -3402,7 +3437,7 @@ function showNefesCoach() {
   const c = $('coach'); c.hidden = false; c.classList.remove('out'); G.coach = true;
 }
 function beginNefes() {
-  G.free = true; G.L = null; G.state = 'play'; G.paused = false;
+  G.free = true; G.L = null; G.state = 'play'; G.paused = false; G.daily = null;
   G.nefes = { left: NEFES.secs, breath: 0, drop: false, pass: false, started: false, over: false, drops: 0, shown: -1 };
   G.sim.clear(); G.strokes = []; G.undo = []; G.stroke = null; G.hint = null; G.dirtyTex = true; G.crit = []; clearPulse(); hideCoach();
   $('bLay').classList.remove('pulse');
@@ -3427,6 +3462,7 @@ function nefesFinish(pressed) {
     for (const el of [cv, stamp]) { el.classList.remove('reveal'); void el.offsetWidth; el.classList.add('reveal'); } // restart the peel and the stamp
     sfxChime(true);
   }
+  G.share = { title: 'Ebru', lines: [t('shareNefes', { b: breaths, m: NEFES.breaths, sec: secs })], url: ARENA_URL };
   $('pKv').innerHTML = `<div><b>${breaths}/${NEFES.breaths}</b><span>${t('breathsLbl')}</span></div><div><b>${t('secsN', { n: secs })}</b><span>${t('secsLbl')}</span></div><div><b>${N.drops}</b><span>${t('dropsLbl')}</span></div>`;
   showOverlay('press');
 }
@@ -3526,15 +3562,26 @@ function finishSheet() {
     const b = $('bBindFree'); b.hidden = false; b.classList.add('pulse'); clearTimeout(finishSheet.t); finishSheet.t = setTimeout(() => b.classList.remove('pulse'), 8000);
     return;
   }
-  const r = G.lastResult, L = G.L, pct = Math.round(r.match * 100);
+  const r = G.lastResult, L = G.L, pct = Math.round(r.match * 100), daily = G.daily;
   const solved = r.match >= 0.8; const stars = solved ? 1 + (r.match >= 0.9 ? 1 : 0) + (r.strokes <= L.par ? 1 : 0) : 0;
-  const prev = PROG.stars[L.index] || 0; const record = stars > prev;
+  // a daily challenge lesson may be one the map has not unlocked yet, so it leaves the lesson progress alone
+  const prev = PROG.stars[L.index] || 0; const record = !daily && stars > prev;
   if (record) { PROG.stars[L.index] = stars; }
-  if (solved) PROG.cur = Math.max(PROG.cur || 0, Math.min(17, L.index + 1));
+  if (solved && !daily) PROG.cur = Math.max(PROG.cur || 0, Math.min(17, L.index + 1));
   // the master's seal: solved at 90 % or better, within par, without a hint (stars are unchanged by it)
-  const seal = solved && r.match >= 0.9 && r.strokes <= L.par && !r.hintUsed, newSeal = seal && !PROG.seals[L.index];
-  if (seal) PROG.seals[L.index] = 1;
-  saveProg(); const total = LESSONS.reduce((a, _, i) => a + (PROG.stars[i] || 0), 0); if (total > (BEST.stars || 0)) { BEST.stars = total; store('best', BEST); }
+  const seal = solved && r.match >= 0.9 && r.strokes <= L.par && !r.hintUsed, newSeal = seal && !daily && !PROG.seals[L.index];
+  if (seal && !daily) PROG.seals[L.index] = 1;
+  if (!daily) { saveProg(); const total = LESSONS.reduce((a, _, i) => a + (PROG.stars[i] || 0), 0); if (total > (BEST.stars || 0)) { BEST.stars = total; store('best', BEST); } }
+  if (solved) arenaAward('ebru-first', 'badgeFirst');
+  if (seal) arenaAward('ebru-seal', 'badgeSeal');
+  const shareLines = [t('shareLesson', { n: `${L.index + 1}. ${L.name[SET.lang]}`, m: pct, s: stars })];
+  $('rDaily').hidden = !daily;
+  if (daily) {
+    const rec = solved ? daily.complete(pct) : null; // the streak counts a solved daily lesson (80 % match)
+    $('rDaily').textContent = (rec ? t('dailyStreak', { s: rec.streak, b: rec.best }) + ' · ' : '') + t('dailyNote');
+    if (rec) shareLines.unshift(t('shareDaily', { d: dayText(daily.day), s: rec.streak }));
+  }
+  G.share = { title: 'Ebru', lines: shareLines, url: ARENA_URL }; $('bRShare').hidden = !ARENA;
   r.stars = stars; r.solved = solved; r.record = record; r.seal = seal;
   sfxChime(solved);
   $('rTitle').textContent = solved ? t('solved') : t('notYet');
@@ -3554,8 +3601,8 @@ function finishSheet() {
     cat.src = stars === 3 ? MASCOT_SRC.cheer : MASCOT_SRC.think; if (cat.complete && cat.naturalWidth) cat.hidden = false;
   }
   $('bBind').hidden = false; r.bound = false; $('bBind').querySelector('span').textContent = t('bind');
-  $('bNext').hidden = !solved; $('bNext').querySelector('span').textContent = L.index === 17 ? t('endTitle') : t('next');
-  G.state = 'result'; showOverlay('result'); $(solved ? 'bNext' : 'bRetry').focus();
+  $('bNext').hidden = !solved || !!daily; $('bNext').querySelector('span').textContent = L.index === 17 ? t('endTitle') : t('next');
+  G.state = 'result'; showOverlay('result'); $(solved && !daily ? 'bNext' : 'bRetry').focus();
 }
 function showResultSheet(bound) {
   const x = $('rSheet').getContext('2d'); x.clearRect(0, 0, 400, 300);
@@ -3581,7 +3628,7 @@ const OVERLAYS = ['title', 'map', 'pause', 'settings', 'result', 'gallery', 'end
 function showOverlay(id) { for (const o of OVERLAYS) $(o).hidden = o !== id; if (id) { const b = $(id).querySelector('button:not([hidden]):not(:disabled)'); if (b) b.focus(); } }
 function hudVisible(v) { $('hud').hidden = !v; $('tools').hidden = !v; $('preview').hidden = !v || G.free; if (!v) { hideCoach(); $('crit').hidden = true; } fitCamera(); }
 function goTitle() {
-  nefesOff(); G.state = 'title'; G.paused = false; G.free = false; G.L = null; G.stroke = null; G.hint = null; clearPulse();
+  nefesOff(); G.daily = null; G.state = 'title'; G.paused = false; G.free = false; G.L = null; G.stroke = null; G.hint = null; clearPulse();
   hudVisible(false); showOverlay('title'); refreshTitle(); redrawOverlay();
 }
 function refreshTitle() {
@@ -3592,13 +3639,19 @@ function refreshTitle() {
   $('bLessons').hidden = solvedN === 0;
   $('rankLine').innerHTML = rankHtml();
   $('bLang2').textContent = SET.lang === 'tr' ? 'English' : 'Türkçe';
+  $('bDaily').hidden = !ARENA;
+  if (ARENA) {
+    const d = ARENA.daily('ebru');
+    $('dailyInfo').textContent = '(' + (d.done ? t('dailyDone') + ' · ' : '') + t('dailyStreak', { s: d.streak, b: d.best }) + ')';
+    $('bDaily').title = t('dailyLesson', { n: `${d.seed % LESSONS.length + 1}. ${LESSONS[d.seed % LESSONS.length].name[SET.lang]}` });
+  }
 }
 function firstUnsolved() { for (let i = 0; i < 18; i++) if (!(PROG.stars[i] > 0)) return i; return 18; }
 // Play: straight into the first unsolved lesson (the map when all eighteen are solved)
 function playNext() { const n = firstUnsolved(); if (n < 18) startLesson(n); else openMap(); }
 function openMap() {
   if (G.stroke) return;
-  nefesOff(); G.state = 'map'; G.paused = false; hudVisible(false); buildMap(); showOverlay('map');
+  nefesOff(); G.daily = null; G.state = 'map'; G.paused = false; hudVisible(false); buildMap(); showOverlay('map');
 }
 function buildMap() {
   const wrap = $('chcards'); wrap.innerHTML = '';
@@ -3622,8 +3675,8 @@ function buildMap() {
   });
 }
 // a lesson starts straight in play (v2): the master's note is a card over the tray, lessons 1-3 show the first stroke's ghost
-function startLesson(i) {
-  G.lesson = i; G.L = LESSONS[i]; G.free = false;
+function startLesson(i, daily) {
+  G.lesson = i; G.L = LESSONS[i]; G.free = false; G.daily = daily || null;
   beginPlay(); showCoach();
   if (i < 3) setHint(0, true);
 }
@@ -3632,7 +3685,7 @@ function beginPlay() {
   G.sim.clear(); G.strokes = []; G.undo = []; G.stroke = null; G.hint = null; G.match = 0; G.matchDirty = false; G.dirtyTex = true; G.tier = 0; G.hintUsed = false; G.crit = []; clearPulse();
   $('bLay').classList.remove('pulse'); hideCoach();
   buildSwatches(); setTool(L.tools[0], true); setColour(L.colours[0], true);
-  $('hLesson').textContent = `${L.index + 1}. ${L.name[SET.lang]}`; $('hMatchWrap').hidden = false; $('hStars').hidden = false; $('bGallery').hidden = true; $('bBindFree').hidden = true; $('segThick').hidden = true; $('bHint').hidden = false;
+  $('hLesson').textContent = lessonLabel(L); $('hMatchWrap').hidden = false; $('hStars').hidden = false; $('bGallery').hidden = true; $('bBindFree').hidden = true; $('segThick').hidden = true; $('bHint').hidden = false;
   drawPreview();
   showOverlay(null); hudVisible(true); updateHud(); redrawOverlay(); canvas.focus();
   if (L.index > 0) {
@@ -3642,7 +3695,7 @@ function beginPlay() {
   }
 }
 function beginFree() {
-  G.free = true; G.L = null; G.state = 'play'; G.paused = false; nefesOff();
+  G.free = true; G.L = null; G.state = 'play'; G.paused = false; nefesOff(); G.daily = null;
   G.sim.clear(); G.strokes = []; G.undo = []; G.stroke = null; G.hint = null; G.dirtyTex = true; G.crit = []; clearPulse(); hideCoach();
   buildSwatches(); setTool('brush', true); setColour(0, true); setThick(G.thick, true);
   $('hLesson').textContent = t('freeTitle'); $('hMatchWrap').hidden = true; $('hStars').hidden = true; $('bGallery').hidden = false; $('bBindFree').hidden = true; $('segThick').hidden = false; $('bHint').hidden = true;
@@ -3722,6 +3775,8 @@ function showEnding() {
   G.state = 'ending'; hudVisible(false); const total = LESSONS.reduce((a, _, i) => a + (PROG.stars[i] || 0), 0);
   $('eKv').innerHTML = `<div><b>${total}/54</b><span>${t('starsLbl')}</span></div><div><b>18/18</b><span>${t('lessons')}</span></div><div><b>${sealCount()}/18</b><span>${t('seal')}</span></div>`;
   $('eRank').innerHTML = rankHtml();
+  G.share = { title: 'Ebru', lines: [t('shareEnd', { s: total, n: sealCount() })], url: ARENA_URL };
+  arenaAward('ebru-usta', 'badgeAll');
   showOverlay('ending'); sfxChime(true);
 }
 
@@ -3735,13 +3790,13 @@ function toast(msg, kind = 'info') {
 }
 function fillIcons(root = document) { for (const el of root.querySelectorAll('i[data-icon]')) if (!el.firstChild) el.innerHTML = ICON[el.dataset.icon] || ''; }
 function applyTexts() {
-  document.documentElement.lang = SET.lang;
+  document.documentElement.lang = SET.lang; if (ARENA) ARENA.lang(SET.lang);
   for (const el of document.querySelectorAll('[data-t]')) el.textContent = t(el.dataset.t);
   for (const el of document.querySelectorAll('[data-tt]')) { el.title = t(el.dataset.tt); el.setAttribute('aria-label', t(el.dataset.tt)); }
   $('bLang').textContent = SET.lang.toUpperCase(); $('bLang2').textContent = SET.lang === 'tr' ? 'English' : 'Türkçe';
   for (const b of document.querySelectorAll('#toolGrp .tbtn')) { b.title = t(b.dataset.tool); b.setAttribute('aria-label', t(b.dataset.tool)); }
   for (const b of document.querySelectorAll('#swatches .sw')) { const nm = PAL[+b.dataset.c][SET.lang]; b.title = nm; b.setAttribute('aria-label', nm); }
-  if (G.L && (G.state === 'play' || G.state === 'laying')) $('hLesson').textContent = `${G.L.index + 1}. ${G.L.name[SET.lang]}`;
+  if (G.L && (G.state === 'play' || G.state === 'laying')) $('hLesson').textContent = lessonLabel(G.L);
   if (G.free && G.state === 'play') $('hLesson').textContent = t(G.nefes ? 'nefes' : 'freeTitle');
   if (G.state === 'map') buildMap(); if (G.state === 'title') refreshTitle(); if (G.coach) { if (G.nefes) showNefesCoach(); else showCoach(false); }
   if (!$('wall').hidden) openWall(G.wallFrom);
@@ -3758,6 +3813,7 @@ function toggleSound() { const on = !(SET.musicOn || SET.sfxOn); SET.musicOn = o
 function setQuality(q) {
   SET.quality = q; saveSettings();
   renderer.setPixelRatio(Math.min(devicePixelRatio || 1, q === 'low' ? 1 : 1.5)); renderer.setSize(innerWidth, innerHeight);
+  if (arenaPerf) { arenaPerf.stop(); arenaPerf = ARENA.perf.attach(renderer, { max: arenaPerfMax(q) }); }
   renderer.shadowMap.enabled = q !== 'low'; sun.castShadow = q !== 'low'; scene.traverse(o => { if (o.material) o.material.needsUpdate = true; });
   const w = q === 'low' ? 512 : 768; if (paintRT.width !== w) { paintRT.setSize(w, w * 3 / 4); G.dirtyTex = true; }
   dustGeo.setDrawRange(0, q === 'low' ? Math.floor(DUST_N / 2) : DUST_N);
@@ -3866,6 +3922,27 @@ $('sSfx').addEventListener('change', () => sfxDrip(30));
 for (const b of $('segLang').children) b.addEventListener('click', () => setLang(b.dataset.v));
 for (const b of $('segQ').children) b.addEventListener('click', () => { sfxClick(); setQuality(b.dataset.v); });
 $('bFull').addEventListener('click', toggleFullscreen);
+$('bDaily').addEventListener('click', () => { bootAudio(); sfxClick(); startDaily(); });
+$('bA11y').addEventListener('click', () => { sfxClick(); if (ARENA) ARENA.openSettings(); });
+for (const id of ['bRShare', 'bPShare', 'bEShare']) $(id).addEventListener('click', () => { sfxClick(); if (ARENA && G.share) ARENA.share(G.share); });
+
+// ---------------------------------------------------------------------------
+// Arena shared layer: daily challenge, share, badges, accessibility, tab pause
+// ---------------------------------------------------------------------------
+// Daily challenge: the seed of the UTC day picks today's lesson (the 18 lessons are fixed recipes, so the day picks one
+// of them for everybody); ?d=YYYYMMDD replays another day. Solving it at 80 % keeps the streak.
+function startDaily() { if (!ARENA) return; const d = ARENA.daily('ebru'); startLesson(d.seed % LESSONS.length, d); }
+function lessonLabel(L) { return (G.daily ? t('daily') + ' · ' : '') + `${L.index + 1}. ${L.name[SET.lang]}`; }
+function dayText(k) { return `${k % 100}.${Math.floor(k / 100) % 100}.${Math.floor(k / 10000)}`; }
+function arenaAward(id, key) { if (ARENA && !FLAG.auto && !FLAG.nosave) ARENA.award(id, t(key)); }
+if (ARENA) {
+  // the ♿ corner button would sit on the tool tray (it spans the whole bottom edge on phones), so the panel opens from
+  // Settings > Accessibility instead. Hidden tab: the loop already freezes (G.hidden); the music and effects stop too.
+  ARENA.on('pause', () => { if (AUD.ctx && AUD.ctx.state === 'running') AUD.ctx.suspend().catch(() => {}); });
+  ARENA.on('resume', () => { if (AUD.ctx && AUD.ctx.state === 'suspended') AUD.ctx.resume().catch(() => {}); });
+  const others = ARENA.games.filter(g => g !== 'ebru'), pick = others[Math.floor(Date.now() / 86400000) % others.length];
+  for (const id of ['aPOther', 'aEOther']) $(id).href = 'https://furkiozknn.github.io/' + pick + '/';
+} else for (const id of ['bA11y', 'bRShare', 'bPShare', 'bEShare', 'aPOther', 'aEOther']) $(id).hidden = true;
 for (const o of OVERLAYS) $(o).addEventListener('pointerdown', () => bootAudio(), { once: true });
 
 // ---------------------------------------------------------------------------
