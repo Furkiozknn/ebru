@@ -1330,8 +1330,37 @@ input[type=range] {
   .toasts { top: calc(122px + var(--sa-t)); }
 }
 
+/* ==========================================================================
+   TEK NEFES (one breath): HUD clock, the pressed print, the gallery wall
+   ========================================================================== */
+.stats .nefes { display: inline-flex; align-items: center; gap: 6px; }
+.stats .nefes b { min-width: 2.2em; text-align: right; }
+.stats .nefes b.low { color: #FF9A7A; text-shadow: 0 0 8px var(--wax-glow); }
+.stats .nefes i[data-icon] { width: 16px; height: 16px; opacity: 0.3; transition: opacity 0.2s; }
+.stats .nefes i[data-icon].on { opacity: 1; color: var(--amber-bright); }
+.pressbox { position: relative; max-width: 560px; margin: 4px auto 10px; }
+.pressbox .sheetimg { width: 100%; }
+.pressbox .sheetimg.reveal { animation: press-peel 1.3s var(--ease-craft) both; }
+.pressbox .pstamp {
+  position: absolute; right: 4%; bottom: 6%; width: 64px; height: 64px;
+  filter: drop-shadow(0 3px 5px rgba(0,0,0,0.45));
+}
+.pressbox .pstamp svg { width: 100%; height: 100%; }
+.pressbox .pstamp.reveal { animation: press-stamp 0.5s 1.1s cubic-bezier(0.3, 1.6, 0.5, 1) both; }
+@keyframes press-peel {
+  0% { clip-path: inset(0 100% 0 0); filter: brightness(1.25) saturate(0.6); transform: translateY(6px); }
+  70% { filter: brightness(1.05) saturate(1); }
+  100% { clip-path: inset(0 0 0 0); filter: none; transform: none; }
+}
+@keyframes press-stamp {
+  from { opacity: 0; transform: scale(1.8) rotate(-18deg); }
+  to { opacity: 0.92; transform: scale(1) rotate(-8deg); }
+}
+.galgrid figcaption { font-size: 12.5px; color: var(--ink2); text-align: center; margin-top: 6px; font-variant-numeric: tabular-nums; }
+
 @media (prefers-reduced-motion: reduce) {
-  .sealchip:not(.off) .seal, .pulse, .lay.pulse, .tbtn.pulse, .sw.pulse, .ibtn.pulse, .cbtn.pulse {
+  .sealchip:not(.off) .seal, .pulse, .lay.pulse, .tbtn.pulse, .sw.pulse, .ibtn.pulse, .cbtn.pulse,
+  .pressbox .sheetimg.reveal, .pressbox .pstamp.reveal {
     animation: none !important;
   }
 }
@@ -1352,6 +1381,7 @@ input[type=range] {
     <span class="mwrap" id="hMatchWrap"><span data-t="match"></span> <b id="hMatch">0%</b><span class="mbar"><i id="hMatchBar"></i><em></em></span></span>
     <span><span data-t="strokes"></span> <b id="hStrokes">0</b></span>
     <span class="stars" id="hStars"></span>
+    <span class="nefes" id="hNefes" hidden><b id="hClock">60</b><span id="hBreath"></span><i data-icon="drop" id="hPipDrop"></i><i data-icon="comb" id="hPipPass"></i></span>
   </div>
   <div class="acts">
     <button class="ibtn" id="bMap" data-tt="lessons"><i data-icon="map"></i></button>
@@ -1407,6 +1437,8 @@ input[type=range] {
         <button class="btn" id="bLessons" hidden><i data-icon="map"></i><span data-t="lessons"></span></button>
         <button class="btn" id="bFree"><i data-icon="brush"></i><span data-t="free"></span></button>
         <button class="btn" id="bGal2"><i data-icon="gallery"></i><span data-t="gallery"></span></button>
+        <button class="btn" id="bNefes"><i data-icon="breath"></i><span data-t="nefes"></span></button>
+        <button class="btn" id="bWall"><i data-icon="wall"></i><span data-t="wall"></span></button>
         <button class="btn" id="bSettings"><i data-icon="gear"></i><span data-t="settings"></span></button>
         <button class="btn" id="bLang2">EN</button>
       </div>
@@ -1488,6 +1520,33 @@ input[type=range] {
   </div>
 </div>
 
+<!-- Tek Nefes: the pressed print -->
+<div id="press" class="overlay" hidden>
+  <div class="panel glass wide">
+    <div class="rhead"><h2 class="serif" id="pTitle"></h2></div>
+    <div class="pressbox"><canvas class="sheetimg" id="pSheet" width="512" height="384"></canvas><span class="pstamp" id="pStamp"></span></div>
+    <div class="kv" id="pKv"></div>
+    <div class="row end" style="margin-top:8px">
+      <button class="btn" id="bPWall"><i data-icon="wall"></i><span data-t="wall"></span></button>
+      <button class="btn" id="bPHome"><span data-t="mainMenu"></span></button>
+      <button class="btn primary" id="bPAgain"><i data-icon="breath"></i><span data-t="nefesAgain"></span></button>
+    </div>
+  </div>
+</div>
+
+<!-- Tek Nefes: the gallery wall (last 12 prints) -->
+<div id="wall" class="overlay" hidden>
+  <div class="panel glass wide">
+    <div class="rhead"><h2 class="serif" data-t="wall"></h2><span id="wallCount" style="color:var(--ink2);font-size:13px"></span></div>
+    <div class="galgrid" id="wallGrid"></div>
+    <p class="empty" id="wallEmpty" data-t="wallEmpty"></p>
+    <div class="row end" style="margin-top:12px">
+      <button class="btn" id="bWallNefes"><i data-icon="breath"></i><span data-t="nefes"></span></button>
+      <button class="btn primary" id="bWallBack"><span data-t="back"></span></button>
+    </div>
+  </div>
+</div>
+
 <!-- Ending -->
 <div id="ending" class="overlay" hidden>
   <div class="panel glass title">
@@ -1563,6 +1622,22 @@ BOUND.length = GALLERY.length; for (let i = 0; i < BOUND.length; i++) BOUND[i] =
 function saveSettings() { store('settings', SET); }
 function saveProg() { store('save', PROG); }
 function saveGallery() { store('gallery', GALLERY); store('bound', BOUND); }
+// Tek Nefes gallery wall: its own versioned key (arena.ebru.duvar.v1 = {v:1, items:[{img, at, b, s, d}]}), so the
+// gallery and every older save stay exactly as they were. Small JPEG thumbnails, the last WALL_MAX prints.
+const WALL_KEY = KEY + 'duvar.v1', WALL_MAX = 12;
+const WALL = [];
+try {
+  const w = JSON.parse(localStorage.getItem(WALL_KEY) || 'null');
+  if (w && w.v === 1 && Array.isArray(w.items)) for (const it of w.items.slice(-WALL_MAX)) if (it && typeof it.img === 'string' && it.img.startsWith('data:image/')) WALL.push(it);
+} catch (e) { WALL.length = 0; }
+function saveWall() { // false when nothing could be stored; a full storage drops the oldest prints until it fits
+  if (FLAG.nosave || FLAG.auto) return true;
+  const n = WALL.length;
+  for (let keep = n; keep >= 0; keep--) {
+    try { localStorage.setItem(WALL_KEY, JSON.stringify({ v: 1, items: WALL.slice(n - keep) })); WALL.splice(0, n - keep); return keep > 0 || n === 0; } catch (e) { /* quota or storage blocked */ }
+  }
+  return false;
+}
 
 // ---------------------------------------------------------------------------
 // i18n
@@ -1598,6 +1673,15 @@ const I18N = {
     rank0: 'Çırak', rank1: 'Kalfa', rank2: 'Usta', rankLine: '{r} · {n}/18 mühür',
     thin: 'İnce', medium: 'Orta', thick: 'Kalın', thickness: 'Su kıvamı', thickToast: 'Su kıvamı: {n}',
     bind: 'Ciltle', unbind: 'Cildi çöz', bound: 'Kâğıt kitap kapağına ciltlendi; galeride', cover: 'Kitap kapağı', didYouKnow: 'Biliyor muydun?',
+    // Tek Nefes
+    nefes: 'Tek Nefes', nefesNote: '60 saniye, 4 nefes. Her nefeste <b>bir damla</b> (fırça serpintisi en çok 9 damla ya da tek büyük damla) ve <b>bir çekiş</b> (tarak ya da biz, en çok bir tekne boyu). Geri alma yok.',
+    nefesTip: 'Saat ilk damlada başlar. Nefesler bitince ya da süre dolunca kâğıt basılır; Enter ile erken basabilirsin.',
+    nefesBreath: 'Nefes {n}/{m}', nefesNext: 'Nefes {n}/{m}: yeni bir damla serp', nefesDropUsed: 'Bu nefesin damlası serpildi: şimdi tarak ya da bizle çek',
+    nefesDropFirst: 'Önce damla: boş suya çekiş olmaz', nefesSpent: 'Nefesler bitti: kâğıdı bas (Enter)', nefesTime: 'Süre doldu: kâğıt basılıyor',
+    nefesEmpty: 'Süre doldu, tekne boş kaldı', nefesNoUndo: 'Tek Nefes\'te geri alma yok', press: 'Kâğıdı bas', pressTitle: 'Kâğıt basıldı',
+    nefesAgain: 'Bir nefes daha', wall: 'Galeri duvarı', wallEmpty: 'Duvar boş. Tek Nefes\'te bir kâğıt bas; son 12 baskı burada asılı kalır.',
+    wallCount: '{n}/12 baskı', wallSaved: 'Baskı galeri duvarına asıldı', wallFull: 'Duvar dolu: en eski baskı indirildi', wallFail: 'Baskı kaydedilemedi: tarayıcı depolaması kapalı',
+    breathsLbl: 'Nefes', secsLbl: 'Saniye', dropsLbl: 'Damla', secsN: '{n} sn',
   },
   en: {
     subtitle: 'Paint on thickened water, an awl in hand: Turkish paper marbling', play: 'Play', continue: 'Continue', settings: 'Settings', free: 'Free tray', gallery: 'Gallery',
@@ -1629,6 +1713,15 @@ const I18N = {
     rank0: 'Apprentice (çırak)', rank1: 'Journeyman (kalfa)', rank2: 'Master (usta)', rankLine: '{r} · {n}/18 seals',
     thin: 'Thin', medium: 'Medium', thick: 'Thick', thickness: 'Water thickness', thickToast: 'Water: {n}',
     bind: 'Bind it', unbind: 'Unbind', bound: 'Sheet bound into a book cover; see the gallery', cover: 'Book cover', didYouKnow: 'Did you know?',
+    // Tek Nefes
+    nefes: 'One Breath', nefesNote: '60 seconds, 4 breaths. Each breath is <b>one drop</b> (a brush sprinkle of up to 9 drops, or one big drop) and <b>one pass</b> (comb or awl, up to one tray length). No undo.',
+    nefesTip: 'The clock starts at the first drop. When the breaths or the time run out the paper is pressed; Enter presses it early.',
+    nefesBreath: 'Breath {n}/{m}', nefesNext: 'Breath {n}/{m}: sprinkle a new drop', nefesDropUsed: 'This breath\'s drop is down: now pull the comb or the awl',
+    nefesDropFirst: 'Drop first: there is nothing to pull on bare water', nefesSpent: 'Out of breath: press the paper (Enter)', nefesTime: 'Time is up: pressing the paper',
+    nefesEmpty: 'Time is up and the tray is empty', nefesNoUndo: 'No undo in One Breath', press: 'Press the paper', pressTitle: 'The paper is pressed',
+    nefesAgain: 'One more breath', wall: 'Gallery wall', wallEmpty: 'The wall is empty. Press a sheet in One Breath; the last 12 prints hang here.',
+    wallCount: '{n}/12 prints', wallSaved: 'Print hung on the gallery wall', wallFull: 'Wall full: the oldest print came down', wallFail: 'Could not save the print: browser storage is off',
+    breathsLbl: 'Breaths', secsLbl: 'Seconds', dropsLbl: 'Drops', secsN: '{n} s',
   },
 };
 const t = (k, vars) => { let s = (I18N[SET.lang] || I18N.tr)[k]; if (s === undefined) s = k; if (vars) for (const v in vars) s = s.replace('{' + v + '}', vars[v]); return s; };
@@ -1659,6 +1752,9 @@ const ICON = {
   close: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg>',
   map: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"/><path d="M9 4v14M15 6v14"/><circle cx="6" cy="13" r="1" fill="currentColor"/><circle cx="18" cy="13" r="1" fill="currentColor"/></svg>',
   bind: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M5 17a3 3 0 0 1 3-3h11"/><path d="M9 8h6"/><circle cx="7" cy="10" r="1" fill="currentColor"/></svg>',
+  // Tek Nefes: a breath leaving the lips in three strokes; the gallery wall: three framed prints on a nail line
+  breath: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 9h10a3 3 0 1 0-3-3"/><path d="M3 13h14a3 3 0 1 1-3 3"/><path d="M3 17h6"/><circle cx="20" cy="9" r="1" fill="currentColor"/></svg>',
+  wall: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M2 5h20"/><rect x="3" y="8" width="5" height="7"/><rect x="9.5" y="8" width="5" height="9"/><rect x="16" y="8" width="5" height="6"/><circle cx="12" cy="12.5" r="1" fill="currentColor"/></svg>',
   // the master's seal: red wax disc with fine pierced ring and calligraphic tulip
   seal: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10.5" fill="#A8321D"/><circle cx="12" cy="12" r="8.5" fill="none" stroke="#F2D8A7" stroke-width="0.9" stroke-dasharray="1.5 1.5"/><path d="M12 17.5V11" stroke="#F2D8A7" stroke-width="1.5" stroke-linecap="round"/><path d="M12 11.5c-2.4-1-3.2-3.6-2-5.6.8 1.4 1.5 1.8 2 2.9.5-1.1 1.2-1.5 2-2.9 1.2 2 .4 4.6-2 5.6z" fill="#F2D8A7"/></svg>',
 };
@@ -1752,6 +1848,14 @@ function sfxPaper(lift) {
   lp.frequency.setValueAtTime(lift ? 900 : 2500, t0); lp.frequency.exponentialRampToValueAtTime(lift ? 3500 : 700, t0 + 0.6);
   g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.18, t0 + 0.08); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.7);
   n.connect(lp).connect(g).connect(AUD.sfx); n.start(t0); n.stop(t0 + 0.8);
+}
+// Tek Nefes: the paper pressed down on the size, a soft low thump under the rustle
+function sfxPress() {
+  if (!AUD.ctx || !SET.sfxOn) return; const c = AUD.ctx, t0 = c.currentTime;
+  const o = c.createOscillator(), g = c.createGain(); o.type = 'sine';
+  o.frequency.setValueAtTime(140, t0); o.frequency.exponentialRampToValueAtTime(55, t0 + 0.25);
+  g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.3, t0 + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.35);
+  o.connect(g).connect(AUD.sfx); o.start(t0); o.stop(t0 + 0.4);
 }
 function sfxClick() {
   if (!AUD.ctx || !SET.sfxOn) return; const c = AUD.ctx, t0 = c.currentTime;
@@ -2713,10 +2817,15 @@ const G = {
   // v2
   thick: 1, hintUsed: false, coach: false, crit: [], tier: 0, lastSaved: -1,
   ripples: [], // redesign: rings on the water where drops fell
+  nefes: null, // Tek Nefes round state (beginNefes), null in the lessons and the free tray
 };
+// Tek Nefes limits: a 60 s clock from the first drop, 4 breaths; each breath is one drop placement (a brush sprinkle of
+// at most 9 drops, or one big drop) followed by one pass (comb or awl, at most 1100 units, about one tray length).
+// Medium water (the lesson tool table), no undo, no reset, no hint.
+const NEFES = { secs: 60, breaths: 4, brushDrops: 9, bigDrops: 1, passLen: 1100 };
 const TOOLFX = { bob: 0 }; // the brush dips when it sprinkles
 function addRipple(x, y, r) { G.ripples.push({ x, y, r, t: 0 }); if (G.ripples.length > 40) G.ripples.shift(); TOOLFX.bob = 1; G.ovDirty = true; }
-const tools = () => G.free ? THICK[G.thick] : TOOL; // the tool table in force: thickness applies to the free tray only
+const tools = () => G.free && !G.nefes ? THICK[G.thick] : TOOL; // the tool table in force: thickness applies to the free tray only
 function redrawTray() { renderPaint(G.sim); G.dirtyTex = false; }
 function computeMatch() {
   if (G.free || !G.L) return 0;
@@ -2789,6 +2898,7 @@ function usedColours() { const s = new Set(); for (const st of G.strokes) if (st
 function allowedColours() { return G.free ? PAL.map((_, i) => i) : G.L.colours; }
 function startStroke(x, y) {
   if (G.state !== 'play' || G.paused || G.stroke) return;
+  if (G.nefes) { if (!nefesAllow(G.tool)) return; G.nefes.started = true; } // the clock starts at the first touch of the water
   x = clampS(x, 2, SW - 2); y = clampS(y, 2, SH - 2);
   G.undo.push({ snap: G.sim.snapshot(), strokes: G.strokes.slice() }); if (G.undo.length > 12) G.undo.shift();
   G.stroke = { k: G.tool, c: G.colour, p: [[x, y]] }; G.runner = new StrokeRunner(G.sim, tools());
@@ -2803,25 +2913,29 @@ function moveStroke(x, y) {
   const last = G.stroke.p[G.stroke.p.length - 1]; const dx = x - last[0], dy = y - last[1], d = Math.hypot(dx, dy);
   if (d < 0.5) return;
   if (d > 1) G.lastDir = [dx / d, dy / d];
-  G.stroke.p.push([x, y]); const before = G.runner.s.n; const ev = G.runner.move(x, y);
+  G.stroke.p.push([x, y]); const before = G.runner.s.n; const ev = G.nefes ? nefesMove(last, x, y) : G.runner.move(x, y);
   for (const e of ev) { sfxDrip(e.r); addRipple(e.x, e.y, e.r); }
   if (G.runner.s.n !== before) { G.dirtyTex = true; G.matchDirty = true; }
   if (AUD.swish) swishLevel(d * 60, G.tool === 'tarak');
+  if (G.nefes && G.runner.s.n >= nefesCap(G.stroke.k)) endStroke(); // the ration is spent: the tool lifts off the water
 }
 function endStroke() {
   if (!G.stroke) return;
-  G.runner.end(); swishStop(); G.strokes.push(G.stroke); G.stroke = null; G.pressing = false;
+  const rs = G.runner.end(); swishStop(); G.strokes.push(G.stroke); G.stroke = null; G.pressing = false;
   G.dirtyTex = true; G.matchDirty = true;
+  if (G.nefes) nefesStroke(G.strokes[G.strokes.length - 1].k, rs ? rs.n : 0);
   if (G.hint !== null) { G.hint = null; clearPulse(); }
   redrawOverlay(); updateHud();
 }
 function undo() {
   if (G.stroke) return;
+  if (G.nefes) { toast(t('nefesNoUndo'), 'bad'); return; }
   if (!G.undo.length) { toast(t('undoNone')); return; }
   const u = G.undo.pop(); G.sim.restore(u.snap); G.strokes = u.strokes; G.dirtyTex = true; G.matchDirty = true; sfxClick(); updateHud();
 }
 function resetTray() {
   if (G.stroke) return;
+  if (G.nefes) { toast(t('nefesNoUndo'), 'bad'); return; }
   G.undo.push({ snap: G.sim.snapshot(), strokes: G.strokes.slice() }); if (G.undo.length > 12) G.undo.shift();
   G.sim.clear(); G.strokes = []; G.dirtyTex = true; G.matchDirty = true; G.match = 0; toast(t('resetToast')); sfxPaper(false); updateHud();
 }
@@ -2872,11 +2986,120 @@ function showCoach(fresh = true) {
 function hideCoach() { if (!G.coach) return; G.coach = false; const c = $('coach'); c.classList.add('out'); setTimeout(() => { if (!G.coach) c.hidden = true; }, 500); }
 
 // ---------------------------------------------------------------------------
+// Tek Nefes (one breath): 60 s, four breaths of one drop and one pass each, then the paper is pressed and the print
+// goes up on the gallery wall. Built on the free tray (G.free) with the lesson tool table; the limits live in NEFES.
+// ---------------------------------------------------------------------------
+const isDropTool = k => k === 'brush' || k === 'big';
+function nefesCap(k) { return k === 'brush' ? NEFES.brushDrops : k === 'big' ? NEFES.bigDrops : Math.floor(NEFES.passLen / STEP); }
+// may this tool touch the water now? every refusal says why
+function nefesAllow(k) {
+  const N = G.nefes; if (N.over) return false;
+  if (N.breath >= NEFES.breaths) { toast(t('nefesSpent'), 'bad'); return false; }
+  if (isDropTool(k) && N.drop) { toast(t('nefesDropUsed'), 'bad'); return false; }
+  if (!isDropTool(k) && !N.drop) { toast(t('nefesDropFirst'), 'bad'); return false; }
+  return true;
+}
+// feed the stroke runner in short steps (at most one drop or one tine step each), so a placement stops exactly at its ration
+function nefesMove(last, x, y) {
+  const s = G.runner.s, cap = nefesCap(s.k), ev = [], dx = x - last[0], dy = y - last[1];
+  const n = Math.max(1, Math.ceil(Math.hypot(dx, dy) / (isDropTool(s.k) ? 24 : STEP)));
+  for (let i = 1; i <= n && s.n < cap; i++) for (const e of G.runner.move(last[0] + dx * i / n, last[1] + dy * i / n)) ev.push(e);
+  return ev;
+}
+// a stroke ended: count it against the breath; the breath closes when its drop and its pass are both down
+function nefesStroke(k, n) {
+  const N = G.nefes;
+  if (n > 0) {
+    if (isDropTool(k)) { N.drop = true; N.drops += n; if (isDropTool(G.tool)) setTool('tarak', true); }
+    else N.pass = true;
+    if (N.drop && N.pass) {
+      N.breath++; N.drop = N.pass = false;
+      if (N.breath >= NEFES.breaths) { toast(t('nefesSpent'), 'good'); $('bLay').classList.add('pulse'); }
+      else { toast(t('nefesNext', { n: N.breath + 1, m: NEFES.breaths })); setTool('brush', true); }
+    }
+  }
+  updateHud();
+}
+function stepNefes(dt) {
+  const N = G.nefes; if (!N.started || N.over) return;
+  N.left = Math.max(0, N.left - dt);
+  if (Math.ceil(N.left) !== N.shown) updateHud();
+  if (N.left <= 0) nefesTimeUp();
+}
+function nefesTimeUp() {
+  if (G.stroke) endStroke();
+  if (G.sim.polys.length) { toast(t('nefesTime')); layPaper(); }
+  else { toast(t('nefesEmpty'), 'bad'); nefesFinish(false); }
+}
+// the HUD: clock, breath count and the two pips of the breath in hand (lit = still to use)
+function nefesHud() {
+  const N = G.nefes; N.shown = Math.ceil(N.left);
+  const c = $('hClock'); c.textContent = t('secsN', { n: N.shown }); c.classList.toggle('low', N.started && N.left <= 10);
+  $('hBreath').textContent = t('nefesBreath', { n: Math.min(N.breath + 1, NEFES.breaths), m: NEFES.breaths });
+  const live = N.breath < NEFES.breaths && !N.over;
+  $('hPipDrop').classList.toggle('on', live && !N.drop); $('hPipPass').classList.toggle('on', live && N.drop && !N.pass);
+}
+function setLayLabel(k) { const sp = $('bLay').querySelector('span'); sp.dataset.t = k; sp.textContent = t(k); }
+function nefesOff() { G.nefes = null; $('hNefes').hidden = true; $('bUndo').hidden = false; $('bReset').hidden = false; setLayLabel('lay'); }
+function showNefesCoach() {
+  $('coTitle').textContent = t('nefes'); $('coNote').innerHTML = `<b>${t('usta')}:</b> ${t('nefesNote')}`;
+  $('coChips').innerHTML = [['brush', 'brush'], ['drop', 'big'], ['comb', 'tarak'], ['awl', 'biz']].map(([i, k]) => `<span class="chip"><i data-icon="${i}"></i>${t(k)}</span>`).join('');
+  $('coTip').textContent = t('nefesTip'); fillIcons($('coChips'));
+  const c = $('coach'); c.hidden = false; c.classList.remove('out'); G.coach = true;
+}
+function beginNefes() {
+  G.free = true; G.L = null; G.state = 'play'; G.paused = false;
+  G.nefes = { left: NEFES.secs, breath: 0, drop: false, pass: false, started: false, over: false, drops: 0, shown: -1 };
+  G.sim.clear(); G.strokes = []; G.undo = []; G.stroke = null; G.hint = null; G.dirtyTex = true; G.crit = []; clearPulse(); hideCoach();
+  $('bLay').classList.remove('pulse');
+  buildSwatches(); setTool('brush', true); setColour(0, true);
+  $('hLesson').textContent = t('nefes'); $('hMatchWrap').hidden = true; $('hStars').hidden = true; $('bGallery').hidden = true; $('bBindFree').hidden = true; $('segThick').hidden = true; $('bHint').hidden = true;
+  $('hNefes').hidden = false; $('bUndo').hidden = true; $('bReset').hidden = true; setLayLabel('press');
+  showOverlay(null); hudVisible(true); updateHud(); redrawOverlay(); canvas.focus(); showNefesCoach();
+}
+// the paper has been lifted (or the time ran out on an empty tray): reveal the print and hang it on the wall
+function nefesFinish(pressed) {
+  const N = G.nefes; N.over = true;
+  const secs = Math.round(N.started ? NEFES.secs - N.left : 0), breaths = N.breath + (N.drop ? 1 : 0);
+  G.strokes = []; G.undo = []; G.state = 'press'; hudVisible(false); $('bLay').classList.remove('pulse');
+  $('pTitle').textContent = pressed ? t('pressTitle') : t('nefesEmpty');
+  const cv = $('pSheet'), stamp = $('pStamp'); cv.hidden = !pressed; stamp.hidden = !pressed;
+  if (pressed) {
+    const th = document.createElement('canvas'); th.width = 160; th.height = 120; th.getContext('2d').drawImage(G.sheetCanvas, 0, 0, 160, 120);
+    WALL.push({ img: th.toDataURL('image/jpeg', 0.72), at: Date.now(), b: breaths, s: secs, d: N.drops });
+    let full = false; while (WALL.length > WALL_MAX) { WALL.shift(); full = true; }
+    const ok = saveWall(); toast(!ok ? t('wallFail') : full ? t('wallFull') : t('wallSaved'), ok ? 'good' : 'bad');
+    cv.getContext('2d').drawImage(G.sheetCanvas, 0, 0, 512, 384); stamp.innerHTML = ICON.seal;
+    for (const el of [cv, stamp]) { el.classList.remove('reveal'); void el.offsetWidth; el.classList.add('reveal'); } // restart the peel and the stamp
+    sfxChime(true);
+  }
+  $('pKv').innerHTML = `<div><b>${breaths}/${NEFES.breaths}</b><span>${t('breathsLbl')}</span></div><div><b>${t('secsN', { n: secs })}</b><span>${t('secsLbl')}</span></div><div><b>${N.drops}</b><span>${t('dropsLbl')}</span></div>`;
+  showOverlay('press');
+}
+function openWall(from) {
+  G.wallFrom = from; const grid = $('wallGrid'); grid.innerHTML = '';
+  $('wallEmpty').hidden = WALL.length > 0; $('wallCount').textContent = t('wallCount', { n: WALL.length });
+  const loc = SET.lang === 'tr' ? 'tr-TR' : 'en-GB';
+  WALL.slice().reverse().forEach((it, ri) => {
+    const idx = WALL.length - 1 - ri, f = document.createElement('figure');
+    const img = document.createElement('img'); img.alt = t('nefes'); img.src = it.img; f.appendChild(img);
+    const cap = document.createElement('figcaption'), when = Number.isFinite(it.at) ? new Date(it.at).toLocaleDateString(loc, { day: 'numeric', month: 'short' }) + ' · ' : '';
+    cap.textContent = when + t('nefesBreath', { n: it.b | 0, m: NEFES.breaths }) + ' · ' + t('secsN', { n: it.s | 0 }); f.appendChild(cap);
+    const b = document.createElement('button'); b.innerHTML = ICON.close; b.title = t('delete'); b.setAttribute('aria-label', t('delete'));
+    b.addEventListener('click', () => { WALL.splice(idx, 1); saveWall(); sfxClick(); openWall(from); }); f.appendChild(b);
+    grid.appendChild(f);
+  });
+  showOverlay('wall');
+}
+function closeWall() { showOverlay(G.wallFrom === 'press' ? 'press' : 'title'); }
+
+// ---------------------------------------------------------------------------
 // Laying the paper
 // ---------------------------------------------------------------------------
 function layPaper() {
   if (G.state !== 'play' || G.paused || G.stroke) return;
   if (!G.sim.polys.length) { toast(t('emptyTray'), 'bad'); return; }
+  if (G.nefes) G.nefes.over = true;
   G.state = 'laying'; G.lay = { t: 0, captured: false }; G.hint = null; clearPulse(); $('bLay').classList.remove('pulse'); hideCoach(); $('crit').hidden = true; redrawOverlay();
   setSheetMap(paperTex); sheet.visible = true; sheet.position.set(0, TRAY_Y + 0.5, 0); sheet.rotation.set(-Math.PI / 2, 0, 0);
   sfxPaper(false); toast(t('laid'));
@@ -2930,8 +3153,8 @@ function bendSheet(amount) {
 function stepLay(dt) {
   const L = G.lay; L.t += dt; const tt = L.t;
   if (tt < 0.7) { const f = tt / 0.7, e = 1 - (1 - f) * (1 - f); sheet.position.y = TRAY_Y + 0.5 * (1 - e) + 0.003; sheet.rotation.set(-Math.PI / 2 + 0.25 * (1 - e), 0, 0); bendSheet(0.04 * (1 - e)); }
-  else if (!L.captured) { L.captured = true; captureSheet(); sheet.position.y = TRAY_Y + 0.003; bendSheet(0); }
-  else if (tt < 1.0) { /* rest on the water */ }
+  else if (!L.captured) { L.captured = true; captureSheet(); sheet.position.y = TRAY_Y + 0.003; bendSheet(0); if (G.nefes) { sfxPress(); rimGlow(); } }
+  else if (tt < 1.0) { if (G.nefes) bendSheet(-0.015 * Math.sin((tt - 0.7) / 0.3 * Math.PI)); /* rest on the water; Tek Nefes: pressed down */ }
   else if (tt < 2.2) {
     const f = (tt - 1.0) / 1.2, e = f * f * (3 - 2 * f); bendSheet(0.07 * Math.sin(f * Math.PI));
     const toward = CAM.portrait ? towardP : towardL;
@@ -2940,6 +3163,7 @@ function stepLay(dt) {
   } else { sheet.visible = false; G.lay = null; finishSheet(); }
 }
 function finishSheet() {
+  if (G.nefes) { nefesFinish(true); return; }
   if (G.free) {
     const full = pushGallery(G.sheetCanvas, false);
     toast(full ? t('galFull') : t('saved'), 'good'); sfxChime(true);
@@ -2999,11 +3223,11 @@ function rankHtml() { return `<span class="seal">${ICON.seal}</span>${t('rankLin
 // ---------------------------------------------------------------------------
 // Screens
 // ---------------------------------------------------------------------------
-const OVERLAYS = ['title', 'map', 'pause', 'settings', 'result', 'gallery', 'ending'];
+const OVERLAYS = ['title', 'map', 'pause', 'settings', 'result', 'gallery', 'ending', 'press', 'wall'];
 function showOverlay(id) { for (const o of OVERLAYS) $(o).hidden = o !== id; if (id) { const b = $(id).querySelector('button:not([hidden]):not(:disabled)'); if (b) b.focus(); } }
 function hudVisible(v) { $('hud').hidden = !v; $('tools').hidden = !v; $('preview').hidden = !v || G.free; if (!v) { hideCoach(); $('crit').hidden = true; } fitCamera(); }
 function goTitle() {
-  G.state = 'title'; G.paused = false; G.free = false; G.L = null; G.stroke = null; G.hint = null; clearPulse();
+  nefesOff(); G.state = 'title'; G.paused = false; G.free = false; G.L = null; G.stroke = null; G.hint = null; clearPulse();
   hudVisible(false); showOverlay('title'); refreshTitle(); redrawOverlay();
 }
 function refreshTitle() {
@@ -3020,7 +3244,7 @@ function firstUnsolved() { for (let i = 0; i < 18; i++) if (!(PROG.stars[i] > 0)
 function playNext() { const n = firstUnsolved(); if (n < 18) startLesson(n); else openMap(); }
 function openMap() {
   if (G.stroke) return;
-  G.state = 'map'; G.paused = false; hudVisible(false); buildMap(); showOverlay('map');
+  nefesOff(); G.state = 'map'; G.paused = false; hudVisible(false); buildMap(); showOverlay('map');
 }
 function buildMap() {
   const wrap = $('chcards'); wrap.innerHTML = '';
@@ -3050,7 +3274,7 @@ function startLesson(i) {
   if (i < 3) setHint(0, true);
 }
 function beginPlay() {
-  const L = G.L; G.state = 'play'; G.paused = false;
+  const L = G.L; G.state = 'play'; G.paused = false; nefesOff();
   G.sim.clear(); G.strokes = []; G.undo = []; G.stroke = null; G.hint = null; G.match = 0; G.matchDirty = false; G.dirtyTex = true; G.tier = 0; G.hintUsed = false; G.crit = []; clearPulse();
   $('bLay').classList.remove('pulse'); hideCoach();
   buildSwatches(); setTool(L.tools[0], true); setColour(L.colours[0], true);
@@ -3064,7 +3288,7 @@ function beginPlay() {
   }
 }
 function beginFree() {
-  G.free = true; G.L = null; G.state = 'play'; G.paused = false;
+  G.free = true; G.L = null; G.state = 'play'; G.paused = false; nefesOff();
   G.sim.clear(); G.strokes = []; G.undo = []; G.stroke = null; G.hint = null; G.dirtyTex = true; G.crit = []; clearPulse(); hideCoach();
   buildSwatches(); setTool('brush', true); setColour(0, true); setThick(G.thick, true);
   $('hLesson').textContent = t('freeTitle'); $('hMatchWrap').hidden = true; $('hStars').hidden = true; $('bGallery').hidden = false; $('bBindFree').hidden = true; $('segThick').hidden = false; $('bHint').hidden = true;
@@ -3108,6 +3332,7 @@ function updateHud() {
     const c = $('crit'), d = G.crit[0], show = G.state === 'play' && G.strokes.length > 0 && (d || G.match >= 0.9);
     c.hidden = !show; if (show) { c.textContent = G.match >= 0.9 || !d ? t('critGood') : critText(d); c.classList.toggle('good', G.match >= 0.9 || !d); c.style.bottom = `calc(${$('tools').offsetHeight + 16}px + var(--sa-b))`; }
   }
+  if (G.nefes) nefesHud();
   $('bUndo').disabled = !G.undo.length;
 }
 function togglePause(force) {
@@ -3163,8 +3388,9 @@ function applyTexts() {
   for (const b of document.querySelectorAll('#toolGrp .tbtn')) { b.title = t(b.dataset.tool); b.setAttribute('aria-label', t(b.dataset.tool)); }
   for (const b of document.querySelectorAll('#swatches .sw')) { const nm = PAL[+b.dataset.c][SET.lang]; b.title = nm; b.setAttribute('aria-label', nm); }
   if (G.L && (G.state === 'play' || G.state === 'laying')) $('hLesson').textContent = `${G.L.index + 1}. ${G.L.name[SET.lang]}`;
-  if (G.free && G.state === 'play') $('hLesson').textContent = t('freeTitle');
-  if (G.state === 'map') buildMap(); if (G.state === 'title') refreshTitle(); if (G.coach) showCoach(false);
+  if (G.free && G.state === 'play') $('hLesson').textContent = t(G.nefes ? 'nefes' : 'freeTitle');
+  if (G.state === 'map') buildMap(); if (G.state === 'title') refreshTitle(); if (G.coach) { if (G.nefes) showNefesCoach(); else showCoach(false); }
+  if (!$('wall').hidden) openWall(G.wallFrom);
   if (G.state === 'play') updateHud();
   $('galEmpty').textContent = t('galEmpty');
   const f = window.EBRU_FACTS[Math.floor(Date.now() / 60000) % window.EBRU_FACTS.length]; $('factLine').innerHTML = `<b>${t('didYouKnow')}</b> ${f[SET.lang]}`;
@@ -3225,6 +3451,7 @@ addEventListener('keydown', e => {
   const k = e.key.toLowerCase();
   if (k === 'm') { toggleMusic(); return; } if (k === 'x') { toggleSfx(); return; } if (k === 'l') { setLang(SET.lang === 'tr' ? 'en' : 'tr'); return; }
   if (k === 'f' && G.state === 'play') { toggleFullscreen(); return; }
+  if (k === 'escape' && !$('wall').hidden) { closeWall(); return; }
   if (k === 'p' || k === 'escape') {
     if (G.state === 'play') { togglePause(); e.preventDefault(); }
     else if (G.state === 'map' || G.state === 'gallery' && G.galleryFrom !== 'play') { if (k === 'escape') goTitle(); }
@@ -3234,9 +3461,9 @@ addEventListener('keydown', e => {
   if (k === '1') setTool('brush'); else if (k === '2') setTool('biz'); else if (k === '3') setTool('tarak'); else if (k === '4') setTool('big');
   else if (k === 'z') undo(); else if (k === 'r') resetTray(); else if (k === 'h') showHint();
   else if (k === 'enter' && !(e.target && e.target.tagName === 'BUTTON')) { layPaper(); e.preventDefault(); }
-  else if (k === 'g' && G.free) openGallery('play');
-  else if (k === 't' && G.free) setThick((G.thick + 1) % 3);
-  else if (k === 'b' && G.free) bindLastFree();
+  else if (k === 'g' && G.free && !G.nefes) openGallery('play');
+  else if (k === 't' && G.free && !G.nefes) setThick((G.thick + 1) % 3);
+  else if (k === 'b' && G.free && !G.nefes) bindLastFree();
 });
 document.addEventListener('visibilitychange', () => { G.hidden = document.hidden; if (document.hidden && G.stroke) endStroke(); });
 
@@ -3262,7 +3489,14 @@ $('bLang2').addEventListener('click', () => { setLang(SET.lang === 'tr' ? 'en' :
 $('bLang').addEventListener('click', () => { setLang(SET.lang === 'tr' ? 'en' : 'tr'); });
 $('bMapBack').addEventListener('click', () => { sfxClick(); goTitle(); });
 $('bResume').addEventListener('click', () => togglePause(false));
-$('bRestart').addEventListener('click', () => { sfxClick(); if (G.free) beginFree(); else beginPlay(); });
+$('bRestart').addEventListener('click', () => { sfxClick(); if (G.nefes) beginNefes(); else if (G.free) beginFree(); else beginPlay(); });
+$('bNefes').addEventListener('click', () => { bootAudio(); sfxClick(); beginNefes(); });
+$('bWall').addEventListener('click', () => { bootAudio(); sfxClick(); openWall('title'); });
+$('bPWall').addEventListener('click', () => { sfxClick(); openWall('press'); });
+$('bPHome').addEventListener('click', () => { sfxClick(); goTitle(); });
+$('bPAgain').addEventListener('click', () => { sfxClick(); beginNefes(); });
+$('bWallNefes').addEventListener('click', () => { sfxClick(); beginNefes(); });
+$('bWallBack').addEventListener('click', () => { sfxClick(); closeWall(); });
 $('bPMenu').addEventListener('click', () => { sfxClick(); goTitle(); });
 $('bEMenu').addEventListener('click', () => { sfxClick(); goTitle(); });
 $('bRMap').addEventListener('click', () => { sfxClick(); openMap(); });
@@ -3344,6 +3578,7 @@ function placeTool() {
 function tick(dt) {
   G.time += dt;
   botStep(dt);
+  if (G.nefes && G.state === 'play' && !G.paused) stepNefes(dt);
   if (G.state === 'laying' && G.lay) stepLay(dt);
   if (G.hint !== null) { G.hintT += dt; G.ovDirty = true; }
   if (G.ripples.length) {
@@ -3370,6 +3605,8 @@ function exportState() {
     // v2
     seals: PROG.seals.slice(), sealCount: sealCount(), rank: ['cirak', 'kalfa', 'usta'][rankIndex()], thick: G.thick, hintUsed: G.hintUsed, coach: G.coach,
     crit: G.crit.map(critText), bound: BOUND.slice(), gallery: GALLERY.length, mascot: !!MASCOT.sprite,
+    // Tek Nefes
+    nefes: G.nefes ? { left: Math.round(G.nefes.left * 10) / 10, breath: G.nefes.breath, drop: G.nefes.drop, pass: G.nefes.pass, started: G.nefes.started, over: G.nefes.over, drops: G.nefes.drops } : null, wall: WALL.length,
   });
 }
 let last = performance.now();
@@ -3398,7 +3635,8 @@ window.ebruSim = (seconds) => { // fast-forward without rendering
   G.simming = false; if (G.dirtyTex) redrawTray(); drawOverlayNow(); G.ovDirty = false; exportState(); return window.ebru;
 };
 window.ebruDebug = { G, LESSONS, PAL, BOT, PROG, buildTarget, matchScore, computeMatch, startStroke, moveStroke, endStroke, layPaper, startLesson, beginPlay, beginFree, setTool, setColour, Marble, StrokeRunner, runStroke, downsample, classStats, paintBase, botPath, TOOL, THICK, redrawTray, paintRT, ovTex, renderer, scene, camera, paintToCanvas,
-  critique, critText, bindCover, setThick, setHint, showHint, showCoach, hideCoach, finishSheet, sealCount, rankIndex, openMap, playNext, FACTS: window.EBRU_FACTS, MASCOT };
+  critique, critText, bindCover, setThick, setHint, showHint, showCoach, hideCoach, finishSheet, sealCount, rankIndex, openMap, playNext, FACTS: window.EBRU_FACTS, MASCOT,
+  NEFES, WALL, beginNefes, nefesTimeUp, openWall, closeWall, undo, resetTray, goTitle };
 
 // boot: texts, icons, hanging sheets from the gallery, then the targets one per task
 fillIcons(); $('logoBig').innerHTML = LOGO; $('logoEnd').innerHTML = LOGO; document.querySelector('.logo-s').innerHTML = LOGO;
