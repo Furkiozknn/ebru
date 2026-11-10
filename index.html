@@ -3224,6 +3224,17 @@ const G = {
 const NEFES = { secs: 60, breaths: 4, brushDrops: 9, bigDrops: 1, passLen: 1100 };
 const TOOLFX = { bob: 0 }; // the brush dips when it sprinkles
 function addRipple(x, y, r) { G.ripples.push({ x, y, r, t: 0 }); if (G.ripples.length > 40) G.ripples.shift(); TOOLFX.bob = 1; G.ovDirty = true; }
+// Mobile haptics: a gentle 15 ms pulse when a drop lands and when an awl / comb drag crosses a paint boundary. Feature-
+// checked (no navigator.vibrate, no call), throttled, skipped by the ?auto bot (no user gesture) and never throws.
+const HAPTIC = { ok: typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function' && !FLAG.auto, last: 0, edge: 0 };
+function buzz() {
+  if (!HAPTIC.ok) return;
+  if (navigator.userActivation && !navigator.userActivation.hasBeenActive) return; // browsers block vibrate before a tap
+  const now = performance.now(); if (now - HAPTIC.last < 45) return; // at most ~20 pulses a second, so a fast drag stays gentle
+  HAPTIC.last = now; try { navigator.vibrate([15]); } catch (e) { HAPTIC.ok = false; }
+}
+// how many paint polygons (by bounding box, cheap) lie under the point: when it changes the stroke crossed a colour edge
+function paintLayersAt(x, y) { let n = 0; for (const p of G.sim.polys) if (x >= p.minx && x <= p.maxx && y >= p.miny && y <= p.maxy) n++; return n; }
 const tools = () => G.free && !G.nefes ? THICK[G.thick] : TOOL; // the tool table in force: thickness applies to the free tray only
 function redrawTray() { renderPaint(G.sim); G.dirtyTex = false; }
 function computeMatch() {
@@ -3302,6 +3313,7 @@ function startStroke(x, y) {
   G.undo.push({ snap: G.sim.snapshot(), strokes: G.strokes.slice() }); if (G.undo.length > 12) G.undo.shift();
   G.stroke = { k: G.tool, c: G.colour, p: [[x, y]] }; G.runner = new StrokeRunner(G.sim, tools());
   const ev = G.runner.begin(G.stroke, x, y); for (const e of ev) { sfxDrip(e.r); addRipple(e.x, e.y, e.r); }
+  buzz(); HAPTIC.edge = paintLayersAt(x, y); // haptics: a tap on the water, and the paint layers under the tool's start point
   if (G.tool === 'biz' || G.tool === 'tarak') swishStart();
   G.dirtyTex = true; G.pressing = true;
   if (G.coach) hideCoach();
@@ -3314,6 +3326,9 @@ function moveStroke(x, y) {
   if (d > 1) G.lastDir = [dx / d, dy / d];
   G.stroke.p.push([x, y]); const before = G.runner.s.n; const ev = G.nefes ? nefesMove(last, x, y) : G.runner.move(x, y);
   for (const e of ev) { sfxDrip(e.r); addRipple(e.x, e.y, e.r); }
+  if (HAPTIC.ok) { // haptics: a pulse per landed drop; for the awl / comb, a pulse when the tip crosses a paint boundary
+    if (ev.length) buzz(); else if (!isDropTool(G.stroke.k)) { const n = paintLayersAt(x, y); if (n !== HAPTIC.edge) { HAPTIC.edge = n; buzz(); } }
+  }
   if (G.runner.s.n !== before) { G.dirtyTex = true; G.matchDirty = true; }
   if (AUD.swish) swishLevel(d * 60, G.tool === 'tarak');
   if (G.nefes && G.runner.s.n >= nefesCap(G.stroke.k)) endStroke(); // the ration is spent: the tool lifts off the water
