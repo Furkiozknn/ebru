@@ -1,0 +1,18 @@
+{
+  "game": "ebru",
+  "recorded": "2026-11-10T01:14:21.252Z",
+  "commit": "802952c",
+  "entrySha": "0d5b8f32f453",
+  "run": "() => {\n      const LESSONS = 18, B = window.ebruDebug.BOT; let t = 0;\n      const lessonsWithResult = () => new Set(B.log.filter((r) => !r.skipped).map((r) => r.lesson)).size;\n      while (!B.done && lessonsWithResult() < LESSONS && B.lessonsDone < LESSONS && t < 3000) { window.ebruSim(10); t += 10; }\n      // per lesson the last result (a lesson the bot fails is retried up to twice and logged each time)\n      const last = new Map(); for (const r of B.log) if (!r.skipped && r.lesson <= LESSONS) last.set(r.lesson, r);\n      const E = [...last.values()];\n      window.__gateM = { lessons: B.lessonsDone, stars: E.reduce((a, r) => a + r.stars, 0), seals: E.filter((r) => r.seal).length,\n        matchSum: Math.round(E.reduce((a, r) => a + r.match, 0) * 10) / 10, attempts: B.log.filter((r) => !r.skipped).length,\n        skipped: B.log.filter((r) => r.skipped).length, strokes: E.reduce((a, r) => a + r.strokes, 0), simSeconds: t };\n    }",
+  "metrics": {
+    "lessons": 18,
+    "stars": 48,
+    "seals": 12,
+    "matchSum": 1650.3,
+    "attempts": 19,
+    "skipped": 0,
+    "strokes": 110,
+    "simSeconds": 200,
+    "gameErrors": 0
+  }
+}
