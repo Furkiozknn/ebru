@@ -544,6 +544,12 @@ i[data-icon] svg { width: 100%; height: 100%; }
 }
 .sw.pulse { animation: amber-lantern-pulse 1.2s ease-in-out infinite; }
 .sw:disabled { opacity: 0.25; cursor: default; transform: none; }
+/* the selected pigment's name, over the tray: colour is not the only cue (pointer-events off, never covers a button) */
+.swname { position: absolute; left: 50%; bottom: calc(100% + 6px); transform: translateX(-50%); pointer-events: none; white-space: nowrap;
+  font-size: 12.5px; font-weight: 700; letter-spacing: .2px; color: #F6E9CF; background: rgba(24, 16, 10, .88);
+  border: 1px solid rgba(232, 145, 45, .45); border-radius: 6px; padding: 3px 10px 3px 8px; display: flex; align-items: center; gap: 6px; }
+.swname:empty { display: none; }
+.swname i { width: 10px; height: 10px; border-radius: 50%; border: 1px solid rgba(255, 255, 255, .7); flex: none; }
 
 .cbtn {
   width: 46px;
@@ -1766,6 +1772,7 @@ a.btn { text-decoration: none; }
 </div>
 <div id="preview" class="preview glass" hidden><span data-t="target"></span><canvas id="tgtPrev" width="200" height="150"></canvas></div>
 <div id="tools" class="tray glass" hidden>
+  <div id="swName" class="swname" aria-hidden="true"></div>
   <div class="grp" id="toolGrp">
     <button class="tbtn" data-tool="brush"><small>1</small><i data-icon="brush"></i></button>
     <button class="tbtn" data-tool="biz"><small>2</small><i data-icon="awl"></i></button>
@@ -1782,7 +1789,7 @@ a.btn { text-decoration: none; }
     <button class="cbtn" id="bGallery" data-tt="gallery" hidden><i data-icon="gallery"></i></button>
   </div>
 </div>
-<div id="toasts" class="toasts"></div>
+<div id="toasts" class="toasts" role="status" aria-live="polite"></div>
 <div id="rim" class="rim"></div>
 <div id="crit" class="crit glass" hidden></div>
 <!-- the master's note, shown over the tray at the start of a lesson and faded at the first stroke -->
@@ -3359,9 +3366,11 @@ function setTool(k, silent) {
   if (!silent) { sfxClick(); toast(t(k)); }
   redrawOverlay();
 }
+function showColourName() { const e = $('swName'); if (!e) return; const c = PAL[G.colour]; e.innerHTML = c ? `<i style="background:${c.hex}"></i>${c[SET.lang]}` : ''; }
 function setColour(i, silent) {
   if (!allowedColours().includes(i)) { if (!silent) toast(t('colourLocked'), 'bad'); return; }
   G.colour = i; for (const b of document.querySelectorAll('#swatches .sw')) b.classList.toggle('sel', +b.dataset.c === i);
+  showColourName();
   toolMeshes.big.userData.paint.material.color.set(PAL[i].hex); bristle.color.set(PAL[i].hex).multiplyScalar(0.7);
   if (!silent) sfxClick();
   redrawOverlay();
@@ -3827,6 +3836,7 @@ function applyTexts() {
   $('bLang').textContent = SET.lang.toUpperCase(); $('bLang2').textContent = SET.lang === 'tr' ? 'English' : 'Türkçe';
   for (const b of document.querySelectorAll('#toolGrp .tbtn')) { b.title = t(b.dataset.tool); b.setAttribute('aria-label', t(b.dataset.tool)); }
   for (const b of document.querySelectorAll('#swatches .sw')) { const nm = PAL[+b.dataset.c][SET.lang]; b.title = nm; b.setAttribute('aria-label', nm); }
+  showColourName();
   if (G.L && (G.state === 'play' || G.state === 'laying')) $('hLesson').textContent = lessonLabel(G.L);
   if (G.free && G.state === 'play') $('hLesson').textContent = t(G.nefes ? 'nefes' : 'freeTitle');
   if (G.state === 'map') buildMap(); if (G.state === 'title') refreshTitle(); if (G.coach) { if (G.nefes) showNefesCoach(); else showCoach(false); }
