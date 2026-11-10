@@ -2038,7 +2038,7 @@ const I18N = {
     star1: 'Çöz (%80)', star2: '%90 uyum', star3: 'Par içinde', chapter: 'Bölüm', locked: 'Kilitli', freeTitle: 'Serbest tekne',
     ch1: 'Temel desenler', ch1d: 'Battal, gelgit, şal ve bülbül yuvası: fırça ve biz.', ch2: 'Taraklı desenler', ch2d: 'Tarakla taranan gelgitler, kılçıklı ve dalgalı taraklı.',
     ch3: 'Çiçekli ebru', ch3d: 'Hatip, lale, karanfil, sümbül, papatya ve gelincik.',
-    emptyTray: 'Tekne boş, önce boya serp', hintToast: 'İpucu: sonraki hamle teknede gösteriliyor', hintDone: 'Tüm hamleler yapıldı, kâğıdı yatır', undoNone: 'Geri alınacak hamle yok',
+    emptyTray: 'Tekne boş, önce boya serp', layAsk: 'Uyum %{p}: yine de yatırmak için bir kez daha bas', hintToast: 'İpucu: sonraki hamle teknede gösteriliyor', hintDone: 'Tüm hamleler yapıldı, kâğıdı yatır', undoNone: 'Geri alınacak hamle yok',
     resetToast: 'Tekne temizlendi', laid: 'Kâğıt yatırıldı…', saved: 'Kâğıt galeriye alındı', galFull: 'Galeri dolu: en eski kâğıt çıkarıldı', galEmpty: 'Henüz kâğıt yok. Serbest teknede boya, Enter ile kâğıdı al.',
     musicOn: 'Müzik açık', musicOff: 'Müzik kapalı', sfxOn: 'Efektler açık', sfxOff: 'Efektler kapalı', soundOn: 'Ses açık', soundOff: 'Ses kapalı',
     toolLocked: 'Bu araç bu derste yok', colourLocked: 'Bu renk henüz açılmadı', newTool: 'Yeni araç: {n}', newColour: 'Yeni renk: {n}',
@@ -2083,7 +2083,7 @@ const I18N = {
     star1: 'Solve (80 %)', star2: '90 % match', star3: 'Within par', chapter: 'Chapter', locked: 'Locked', freeTitle: 'Free tray',
     ch1: 'Basic patterns', ch1d: 'Battal, gelgit, şal and nightingale nest: brush and awl.', ch2: 'Combed patterns', ch2d: 'Combed gelgits, herringbone and wavy combs.',
     ch3: 'Flower ebru', ch3d: 'Hatip, tulip, carnation, hyacinth, daisy and poppy.',
-    emptyTray: 'The tray is empty, sprinkle some paint first', hintToast: 'Hint: the next stroke is shown on the tray', hintDone: 'All strokes made, lay the paper', undoNone: 'Nothing to undo',
+    emptyTray: 'The tray is empty, sprinkle some paint first', layAsk: 'Match {p} %: press again to lay the paper anyway', hintToast: 'Hint: the next stroke is shown on the tray', hintDone: 'All strokes made, lay the paper', undoNone: 'Nothing to undo',
     resetToast: 'Tray cleared', laid: 'Paper laid…', saved: 'Sheet saved to the gallery', galFull: 'Gallery full: the oldest sheet was removed', galEmpty: 'No sheets yet. Paint in the free tray and press Enter to lift a sheet.',
     musicOn: 'Music on', musicOff: 'Music off', sfxOn: 'Effects on', sfxOff: 'Effects off', soundOn: 'Sound on', soundOff: 'Sound off',
     toolLocked: 'This tool is not part of this lesson', colourLocked: 'This colour is not unlocked yet', newTool: 'New tool: {n}', newColour: 'New colour: {n}',
@@ -3499,6 +3499,12 @@ function closeWall() { showOverlay(G.wallFrom === 'press' ? 'press' : 'title'); 
 function layPaper() {
   if (G.state !== 'play' || G.paused || G.stroke) return;
   if (!G.sim.polys.length) { toast(t('emptyTray'), 'bad'); return; }
+  // below 80 % a lesson sheet fails: the first press only asks, a second press within 4 s lays it (not in free tray / Tek Nefes, never for the bot)
+  if (!G.free && !BOT.on) {
+    const m = G.matchDirty ? computeMatch() : G.match;
+    if (m < 0.8 && !(G.layAsk && G.time - G.layAsk < 4)) { G.layAsk = G.time; toast(t('layAsk', { p: Math.round(m * 100) }), 'bad'); return; }
+  }
+  G.layAsk = 0;
   if (G.nefes) G.nefes.over = true;
   G.state = 'laying'; G.lay = { t: 0, captured: false }; G.hint = null; clearPulse(); $('bLay').classList.remove('pulse'); hideCoach(); $('crit').hidden = true; redrawOverlay();
   setSheetMap(paperTex); sheet.visible = true; sheet.position.set(0, TRAY_Y + 0.5, 0); sheet.rotation.set(-Math.PI / 2, 0, 0);
@@ -3842,17 +3848,42 @@ function toSim(cx, cy) {
 }
 const inTray = (p, m = 0) => p && p.x >= -m && p.x <= SW + m && p.y >= -m && p.y <= SH + m;
 const pointers = new Map(); let strokePointer = null, pinch = null;
+// a touch waits for intent: the stroke starts after ~6 px of movement or ~120 ms of a single finger held,
+// so the first finger of a pinch never drops paint (mouse and pen start at once)
+let touchWait = null, touchHeld = null; const TOUCH_SLOP = 6, TOUCH_HOLD = 120;
+function commitTouch(byHold) {
+  const w = touchWait; touchWait = null; if (!w) return;
+  // a stroke started by the hold timer remembers enough to be taken back if a second finger that touched
+  // within the hold window was still queued behind a slow frame (the pinch then never counts)
+  const keep = byHold ? { id: w.id, ts: w.ts, undo: G.undo.length, nefes: G.nefes ? { ...G.nefes } : null, ripples: G.ripples.length } : null;
+  strokePointer = w.id; startStroke(w.x, w.y); if (!G.stroke) strokePointer = null;
+  touchHeld = G.stroke && keep;
+}
+function takeBackHeldTouch() {
+  const k = touchHeld; touchHeld = null;
+  if (!k || !G.stroke || strokePointer !== k.id || G.undo.length !== k.undo + 1) return false;
+  const u = G.undo.pop(); G.runner = null; G.stroke = null; G.pressing = false; swishStop();
+  G.sim.restore(u.snap); G.strokes = u.strokes; if (k.nefes && G.nefes) Object.assign(G.nefes, k.nefes);
+  G.ripples.length = Math.min(G.ripples.length, k.ripples); G.dirtyTex = true; G.matchDirty = true; G.ovDirty = true; updateHud();
+  return true;
+}
 canvas.addEventListener('pointerdown', e => {
   bootAudio(); canvas.focus();
   pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-  if (pointers.size === 2) { if (G.stroke) endStroke(); strokePointer = null; const [a, b] = [...pointers.values()]; pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), z: CAM.zoom }; return; }
+  if (pointers.size === 2) {
+    touchWait = null;
+    if (touchHeld && e.timeStamp - touchHeld.ts < TOUCH_HOLD) takeBackHeldTouch();
+    touchHeld = null; if (G.stroke) endStroke(); strokePointer = null; const [a, b] = [...pointers.values()]; pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), z: CAM.zoom }; return; }
   if (G.state !== 'play' || G.paused || G.stroke) return;
   const p = toSim(e.clientX, e.clientY); if (!inTray(p, 40)) return;
   try { canvas.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
-  strokePointer = e.pointerId; G.hover = p; startStroke(p.x, p.y);
+  G.hover = p;
+  if (e.pointerType === 'touch') { touchWait = { id: e.pointerId, x: p.x, y: p.y, cx: e.clientX, cy: e.clientY, ts: e.timeStamp }; return; }
+  strokePointer = e.pointerId; startStroke(p.x, p.y);
 });
 canvas.addEventListener('pointermove', e => {
   if (pointers.has(e.pointerId)) pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (touchWait && e.pointerId === touchWait.id && Math.hypot(e.clientX - touchWait.cx, e.clientY - touchWait.cy) >= TOUCH_SLOP) commitTouch();
   if (pinch && pointers.size === 2) { const [a, b] = [...pointers.values()]; const d = Math.hypot(a.x - b.x, a.y - b.y); CAM.zoom = clampS(pinch.z * pinch.d / Math.max(1, d), 0.55, 1.4); fitCamera(); return; }
   const p = toSim(e.clientX, e.clientY);
   G.hover = inTray(p, 60) ? p : null;
@@ -3861,7 +3892,9 @@ canvas.addEventListener('pointermove', e => {
 });
 function pointerEnd(e) {
   pointers.delete(e.pointerId); if (pointers.size < 2) pinch = null;
-  if (e.pointerId === strokePointer) { strokePointer = null; endStroke(); }
+  // a quick tap still drops paint where it touched; a cancelled touch (the browser took the gesture) does not
+  if (touchWait && e.pointerId === touchWait.id) { if (e.type === 'pointerup') commitTouch(); else touchWait = null; }
+  if (e.pointerId === strokePointer) { strokePointer = null; touchHeld = null; endStroke(); }
 }
 canvas.addEventListener('pointerup', pointerEnd); canvas.addEventListener('pointercancel', pointerEnd);
 canvas.addEventListener('pointerleave', () => { if (!G.stroke) { G.hover = null; redrawOverlay(); } });
@@ -4018,6 +4051,7 @@ function placeTool() {
 }
 function tick(dt) {
   G.time += dt;
+  if (touchWait && performance.now() - touchWait.ts >= TOUCH_HOLD) commitTouch(true);
   botStep(dt);
   if (G.nefes && G.state === 'play' && !G.paused) stepNefes(dt);
   if (G.state === 'laying' && G.lay) stepLay(dt);
