@@ -3959,7 +3959,7 @@ const inTray = (p, m = 0) => p && p.x >= -m && p.x <= SW + m && p.y >= -m && p.y
 const pointers = new Map(); let strokePointer = null, pinch = null;
 // a touch waits for intent: the stroke starts after ~6 px of movement or ~120 ms of a single finger held,
 // so the first finger of a pinch never drops paint (mouse and pen start at once)
-let touchWait = null, touchHeld = null; const TOUCH_SLOP = 6, TOUCH_HOLD = 120;
+let touchWait = null, touchHeld = null; const TOUCH_SLOP = 6, TOUCH_HOLD = 120, PINCH_DEADZONE = 12;
 function commitTouch(byHold) {
   const w = touchWait; touchWait = null; if (!w) return;
   // a stroke started by the hold timer remembers enough to be taken back if a second finger that touched
@@ -3978,11 +3978,15 @@ function takeBackHeldTouch() {
 }
 canvas.addEventListener('pointerdown', e => {
   bootAudio(); canvas.focus();
+  if (e.pointerType === 'touch' && e.cancelable) e.preventDefault();
   pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-  if (pointers.size === 2) {
+  if (pointers.size >= 2) {
     touchWait = null;
     if (touchHeld && e.timeStamp - touchHeld.ts < TOUCH_HOLD) takeBackHeldTouch();
-    touchHeld = null; if (G.stroke) endStroke(); strokePointer = null; const [a, b] = [...pointers.values()]; pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), z: CAM.zoom }; return; }
+    touchHeld = null; if (G.stroke) endStroke(); strokePointer = null;
+    if (pointers.size === 2) { const [a, b] = [...pointers.values()]; pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), z: CAM.zoom, active: false }; }
+    return;
+  }
   if (G.state !== 'play' || G.paused || G.stroke) return;
   const p = toSim(e.clientX, e.clientY); if (!inTray(p, 40)) return;
   try { canvas.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
@@ -3991,9 +3995,19 @@ canvas.addEventListener('pointerdown', e => {
   strokePointer = e.pointerId; startStroke(p.x, p.y);
 });
 canvas.addEventListener('pointermove', e => {
+  if (e.pointerType === 'touch' && e.cancelable) e.preventDefault();
   if (pointers.has(e.pointerId)) pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (pointers.size >= 2) {
+    if (pinch && pointers.size === 2) {
+      const [a, b] = [...pointers.values()]; const d = Math.hypot(a.x - b.x, a.y - b.y);
+      if (!pinch.active) {
+        if (Math.abs(d - pinch.d) >= PINCH_DEADZONE) { pinch.active = true; pinch.d = d; pinch.z = CAM.zoom; }
+      }
+      if (pinch.active) { CAM.zoom = clampS(pinch.z * pinch.d / Math.max(1, d), 0.55, 1.4); fitCamera(); }
+    }
+    return; // Multi-touch exclusively handles zoom/pan; never stroke simulation
+  }
   if (touchWait && e.pointerId === touchWait.id && Math.hypot(e.clientX - touchWait.cx, e.clientY - touchWait.cy) >= TOUCH_SLOP) commitTouch();
-  if (pinch && pointers.size === 2) { const [a, b] = [...pointers.values()]; const d = Math.hypot(a.x - b.x, a.y - b.y); CAM.zoom = clampS(pinch.z * pinch.d / Math.max(1, d), 0.55, 1.4); fitCamera(); return; }
   const p = toSim(e.clientX, e.clientY);
   G.hover = inTray(p, 60) ? p : null;
   if (G.stroke && e.pointerId === strokePointer && p) moveStroke(p.x, p.y);
@@ -4008,6 +4022,11 @@ function pointerEnd(e) {
 canvas.addEventListener('pointerup', pointerEnd); canvas.addEventListener('pointercancel', pointerEnd);
 canvas.addEventListener('pointerleave', () => { if (!G.stroke) { G.hover = null; redrawOverlay(); } });
 canvas.addEventListener('wheel', e => { e.preventDefault(); CAM.zoom = clampS(CAM.zoom * (1 + e.deltaY * 0.0012), 0.55, 1.4); fitCamera(); }, { passive: false });
+// Touch event handlers on water canvas: isolate single-finger stroke simulation from multi-touch gestures
+canvas.addEventListener('touchstart', e => { if (e.touches.length > 1 && e.cancelable) e.preventDefault(); }, { passive: false });
+canvas.addEventListener('touchmove', e => { if (e.cancelable) e.preventDefault(); }, { passive: false });
+canvas.addEventListener('gesturestart', e => { if (e.cancelable) e.preventDefault(); });
+canvas.addEventListener('gesturechange', e => { if (e.cancelable) e.preventDefault(); });
 addEventListener('keydown', e => {
   const tag = (e.target && e.target.tagName) || ''; if (tag === 'INPUT') return;
   const k = e.key.toLowerCase();
@@ -4220,7 +4239,7 @@ window.ebruSim = (seconds) => { // fast-forward without rendering
 };
 window.ebruDebug = { G, LESSONS, PAL, BOT, PROG, buildTarget, matchScore, computeMatch, startStroke, moveStroke, endStroke, layPaper, startLesson, beginPlay, beginFree, setTool, setColour, Marble, StrokeRunner, runStroke, downsample, classStats, paintBase, botPath, TOOL, THICK, redrawTray, paintRT, ovTex, renderer, scene, camera, paintToCanvas,
   critique, critText, bindCover, setThick, setHint, showHint, showCoach, hideCoach, finishSheet, sealCount, rankIndex, openMap, playNext, FACTS: window.EBRU_FACTS, MASCOT,
-  NEFES, WALL, beginNefes, nefesTimeUp, openWall, closeWall, undo, resetTray, goTitle };
+  NEFES, WALL, beginNefes, nefesTimeUp, openWall, closeWall, undo, resetTray, goTitle, PINCH_DEADZONE };
 
 // boot: texts, icons, hanging sheets from the gallery, then the targets one per task
 fillIcons(); $('logoBig').innerHTML = LOGO; $('logoEnd').innerHTML = LOGO; document.querySelector('.logo-s').innerHTML = LOGO;
