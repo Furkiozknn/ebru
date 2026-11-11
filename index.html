@@ -4046,7 +4046,32 @@ addEventListener('keydown', e => {
   else if (k === 't' && G.free && !G.nefes) setThick((G.thick + 1) % 3);
   else if (k === 'b' && G.free && !G.nefes) bindLastFree();
 });
-document.addEventListener('visibilitychange', () => { G.hidden = document.hidden; if (document.hidden && G.stroke) endStroke(); });
+let rafId = null, last = performance.now();
+// Visibility-aware battery saver: pause the simulation loop and suspend AudioContext when tab is hidden
+function onVisibilityChange() {
+  G.hidden = document.hidden;
+  if (document.hidden) {
+    if (G.stroke) endStroke();
+    swishStop();
+    if (rafId) {
+      cancelAnimationFrame(rafId);
+      rafId = null;
+    }
+    if (AUD.ctx && AUD.ctx.state === 'running') {
+      AUD.ctx.suspend().catch(() => {});
+    }
+  } else {
+    last = performance.now();
+    if (!rafId) {
+      rafId = requestAnimationFrame(frame);
+    }
+    if (AUD.ctx && AUD.ctx.state === 'suspended') {
+      AUD.ctx.resume().catch(() => {});
+      if (SET.musicOn) AUD.nextBar = AUD.ctx.currentTime + 0.1;
+    }
+  }
+}
+document.addEventListener('visibilitychange', onVisibilityChange);
 
 // buttons
 $('bPlay').addEventListener('click', () => { bootAudio(); sfxClick(); playNext(); });
@@ -4210,13 +4235,16 @@ function exportState() {
     crit: G.crit.map(critText), bound: BOUND.slice(), gallery: GALLERY.length, mascot: !!MASCOT.sprite,
     // Tek Nefes
     nefes: G.nefes ? { left: Math.round(G.nefes.left * 10) / 10, breath: G.nefes.breath, drop: G.nefes.drop, pass: G.nefes.pass, started: G.nefes.started, over: G.nefes.over, drops: G.nefes.drops } : null, wall: WALL.length,
+    hidden: G.hidden,
   });
 }
-let last = performance.now();
 function frame(now) {
-  requestAnimationFrame(frame);
+  if (G.hidden || document.hidden) {
+    rafId = null;
+    return;
+  }
+  rafId = requestAnimationFrame(frame);
   let dt = (now - last) / 1000; last = now; if (dt > 0.1) dt = 0.1; if (dt <= 0) return;
-  if (G.hidden) return; // the tab is hidden: freeze everything
   const w0 = performance.now();
   tick(dt);
   // while a stroke is in progress the paint is re-rasterised at 30 Hz, the room still renders at 60
@@ -4239,7 +4267,7 @@ window.ebruSim = (seconds) => { // fast-forward without rendering
 };
 window.ebruDebug = { G, LESSONS, PAL, BOT, PROG, buildTarget, matchScore, computeMatch, startStroke, moveStroke, endStroke, layPaper, startLesson, beginPlay, beginFree, setTool, setColour, Marble, StrokeRunner, runStroke, downsample, classStats, paintBase, botPath, TOOL, THICK, redrawTray, paintRT, ovTex, renderer, scene, camera, paintToCanvas,
   critique, critText, bindCover, setThick, setHint, showHint, showCoach, hideCoach, finishSheet, sealCount, rankIndex, openMap, playNext, FACTS: window.EBRU_FACTS, MASCOT,
-  NEFES, WALL, beginNefes, nefesTimeUp, openWall, closeWall, undo, resetTray, goTitle, PINCH_DEADZONE };
+  NEFES, WALL, beginNefes, nefesTimeUp, openWall, closeWall, undo, resetTray, goTitle, PINCH_DEADZONE, onVisibilityChange };
 
 // boot: texts, icons, hanging sheets from the gallery, then the targets one per task
 fillIcons(); $('logoBig').innerHTML = LOGO; $('logoEnd').innerHTML = LOGO; document.querySelector('.logo-s').innerHTML = LOGO;
@@ -4248,7 +4276,7 @@ GALLERY.slice(-3).forEach((src, i) => { const img = new Image(); img.onload = ()
 G.hangSlot = Math.min(3, GALLERY.length) % 3;
 renderer.setSize(innerWidth, innerHeight); fitCamera(); redrawTray(); drawOverlayNow();
 dustGeo.setDrawRange(0, SET.quality === 'low' ? Math.floor(DUST_N / 2) : DUST_N);
-requestAnimationFrame(frame);
+if (!document.hidden) rafId = requestAnimationFrame(frame);
 let loadIdx = 0;
 function loadStep() {
   try { buildTarget(LESSONS[loadIdx]); } catch (e) { window.__errs.push('target ' + loadIdx + ': ' + e.message); }
