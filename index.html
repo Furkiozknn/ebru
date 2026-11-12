@@ -2297,9 +2297,15 @@ function applyVolumes() {
   AUD.sfx.gain.value = SET.sfxOn ? SET.sfx : 0;
 }
 function noiseSrc(dur) { const s = AUD.ctx.createBufferSource(); s.buffer = AUD.noise; s.loop = true; s.loopStart = Math.random(); s.loopEnd = s.loopStart + Math.min(1, dur + 0.1); return s; }
+// Resume AudioContext if needed when playing gameplay/UI SFX so effects are never silent after tab return or interrupt
+function sfxReady() {
+  if (!AUD.ctx || !SET.sfxOn) return false;
+  if (AUD.ctx.state !== 'running') AUD.ctx.resume().catch(() => {});
+  return true;
+}
 // a drop falling on the water: pitch sweep plus a soft noise tick; bigger drops are lower
 function sfxDrip(r = 30) {
-  if (!AUD.ctx || !SET.sfxOn) return; const c = AUD.ctx, t0 = c.currentTime;
+  if (!sfxReady()) return; const c = AUD.ctx, t0 = c.currentTime;
   const o = c.createOscillator(), g = c.createGain(); o.type = 'sine';
   const f = 1200 * Math.pow(30 / Math.max(10, r), 0.6);
   o.frequency.setValueAtTime(f, t0); o.frequency.exponentialRampToValueAtTime(f * 0.45, t0 + 0.12);
@@ -2311,7 +2317,7 @@ function sfxDrip(r = 30) {
 }
 // the awl / comb moving through the paint: a band-passed noise whose level follows the pointer speed
 function swishStart() {
-  if (!AUD.ctx || !SET.sfxOn || AUD.swish) return; const c = AUD.ctx;
+  if (!sfxReady() || AUD.swish) return; const c = AUD.ctx;
   const n = noiseSrc(2); const bp = c.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 900; bp.Q.value = 0.8;
   const g = c.createGain(); g.gain.value = 0; n.connect(bp).connect(g).connect(AUD.sfx); n.start();
   AUD.swish = { n, bp, g };
@@ -2327,7 +2333,7 @@ function swishStop() {
 }
 // paper laid on the water and lifted: filtered noise rustle
 function sfxPaper(lift) {
-  if (!AUD.ctx || !SET.sfxOn) return; const c = AUD.ctx, t0 = c.currentTime;
+  if (!sfxReady()) return; const c = AUD.ctx, t0 = c.currentTime;
   const n = noiseSrc(0.8), lp = c.createBiquadFilter(), g = c.createGain(); lp.type = 'lowpass';
   lp.frequency.setValueAtTime(lift ? 900 : 2500, t0); lp.frequency.exponentialRampToValueAtTime(lift ? 3500 : 700, t0 + 0.6);
   g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.18, t0 + 0.08); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.7);
@@ -2335,20 +2341,20 @@ function sfxPaper(lift) {
 }
 // Tek Nefes: the paper pressed down on the size, a soft low thump under the rustle
 function sfxPress() {
-  if (!AUD.ctx || !SET.sfxOn) return; const c = AUD.ctx, t0 = c.currentTime;
+  if (!sfxReady()) return; const c = AUD.ctx, t0 = c.currentTime;
   const o = c.createOscillator(), g = c.createGain(); o.type = 'sine';
   o.frequency.setValueAtTime(140, t0); o.frequency.exponentialRampToValueAtTime(55, t0 + 0.25);
   g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.3, t0 + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.35);
   o.connect(g).connect(AUD.sfx); o.start(t0); o.stop(t0 + 0.4);
 }
 function sfxClick() {
-  if (!AUD.ctx || !SET.sfxOn) return; const c = AUD.ctx, t0 = c.currentTime;
+  if (!sfxReady()) return; const c = AUD.ctx, t0 = c.currentTime;
   const o = c.createOscillator(), g = c.createGain(); o.type = 'triangle'; o.frequency.value = 660;
   g.gain.setValueAtTime(0.12, t0); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.06);
   o.connect(g).connect(AUD.sfx); o.start(t0); o.stop(t0 + 0.08);
 }
 function sfxChime(good) {
-  if (!AUD.ctx || !SET.sfxOn) return; const c = AUD.ctx, t0 = c.currentTime;
+  if (!sfxReady()) return; const c = AUD.ctx, t0 = c.currentTime;
   const notes = good ? [587, 740, 880, 1175] : [440, 415];
   notes.forEach((f, i) => {
     const o = c.createOscillator(), g = c.createGain(); o.type = 'sine'; o.frequency.value = f;
@@ -2359,7 +2365,7 @@ function sfxChime(good) {
 }
 // v2: the match crossing 80 % (two soft notes) and 90 % (a brighter three-note rise)
 function sfxTier(level) {
-  if (!AUD.ctx || !SET.sfxOn) return; const c = AUD.ctx, t0 = c.currentTime;
+  if (!sfxReady()) return; const c = AUD.ctx, t0 = c.currentTime;
   const notes = level >= 2 ? [740, 1175, 1480] : [587, 880];
   notes.forEach((f, i) => {
     const o = c.createOscillator(), g = c.createGain(); o.type = level >= 2 ? 'triangle' : 'sine'; o.frequency.value = f;
@@ -2398,6 +2404,8 @@ function drone(ts, dur) {
 function musicTick() {
   if (!AUD.ctx || !SET.musicOn || document.hidden) return;
   const c = AUD.ctx; const BAR = 60 / 54 * 4;
+  // Clamp nextBar ahead of currentTime so returning from a hidden tab never schedules a burst of overlapping bars
+  if (AUD.nextBar < c.currentTime) AUD.nextBar = c.currentTime + 0.1;
   while (AUD.nextBar < c.currentTime + 1.2) {
     const ts = AUD.nextBar, bar = AUD.bar;
     drone(ts, BAR);
