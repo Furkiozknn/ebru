@@ -4807,15 +4807,26 @@ $('bRestart').addEventListener('click', () => { sfxClick(); if (G.nefes) beginNe
 $('bNefes').addEventListener('click', () => { bootAudio(); sfxClick(); beginNefes(); });
 $('bWall').addEventListener('click', () => { bootAudio(); sfxClick(); openWall('title'); });
 $('bPWall').addEventListener('click', () => { sfxClick(); openWall('press'); });
-$('bPHome').addEventListener('click', () => { sfxClick(); goTitle(); });
-$('bPAgain').addEventListener('click', () => { sfxClick(); beginNefes(); });
+$('bPHome').addEventListener('click', () => { sfxClick(); afterBreak(goTitle); });
+$('bPAgain').addEventListener('click', () => { sfxClick(); afterBreak(beginNefes); });
 $('bWallNefes').addEventListener('click', () => { sfxClick(); beginNefes(); });
 $('bWallBack').addEventListener('click', () => { sfxClick(); closeWall(); });
 $('bPMenu').addEventListener('click', () => { sfxClick(); goTitle(); });
 $('bEMenu').addEventListener('click', () => { sfxClick(); goTitle(); });
-$('bRMap').addEventListener('click', () => { sfxClick(); openMap(); });
-$('bRetry').addEventListener('click', () => { sfxClick(); beginPlay(); });
-$('bNext').addEventListener('click', () => { sfxClick(); if (G.L.index === 17) { if (firstUnsolved() >= 18) showEnding(); else openMap(); } else startLesson(G.L.index + 1); });
+$('bRMap').addEventListener('click', () => { sfxClick(); afterBreak(openMap); });
+$('bRetry').addEventListener('click', () => { sfxClick(); afterBreak(beginPlay); });
+$('bNext').addEventListener('click', () => { sfxClick(); afterBreak(() => { if (G.L.index === 17) { if (firstUnsolved() >= 18) showEnding(); else openMap(); } else startLesson(G.L.index + 1); }); });
+// Portals (arena-kit v1.3 Arena.portal): an interstitial may play only after a sheet is pressed, when the player leaves
+// the lesson result card ("next lesson", "try again", "lessons") or the One Breath print card ("one more breath",
+// "main menu"). The free tray lays sheets without a card and keeps painting, so no ad there. On the game's own site
+// (no portal SDK) afterBreak() runs the action synchronously, exactly as before; the ?auto bot (it clicks these buttons)
+// also always goes straight through. One tap = one action. No rewarded hook: Ebru is a creative game (design decision).
+let breakBusy = false;
+function afterBreak(f) {
+  if (BOT.on || !(window.Arena && Arena.portal && Arena.portal.name !== 'none')) return f(); // own site / bot: synchronous
+  if (breakBusy) return; breakBusy = true;
+  Arena.portal.midgame().catch(() => false).then(() => { breakBusy = false; f(); });
+}
 $('bHint').addEventListener('click', showHint); $('bUndo').addEventListener('click', undo); $('bReset').addEventListener('click', resetTray);
 $('bPause').addEventListener('click', () => togglePause()); $('bSound').addEventListener('click', toggleSound); $('bLay').addEventListener('click', layPaper);
 for (const b of document.querySelectorAll('#toolGrp .tbtn')) b.addEventListener('click', () => setTool(b.dataset.tool));
