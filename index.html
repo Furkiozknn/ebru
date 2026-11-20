@@ -3,17 +3,26 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<title>Ebru</title>
+<title>Ebru: kitreli suda boya bulmacası</title>
 <meta name="arena-game" content="ebru">
-<meta name="description" content="A 3D paper-marbling art puzzle: sprinkle, comb and shape paint on thickened water, earn the master's seal, then lay the paper. Plays in the browser.">
+<meta name="description" content="Kitreli suda boya serp, bizle çiz, taraklı desen çek: 3D geleneksel Türk ebrusu bulmacası. 18 ders, günlük meydan okuma, tek nefes kipi. Tarayıcıda, kurulumsuz.">
 <meta property="og:type" content="website">
-<meta property="og:title" content="Ebru">
-<meta property="og:description" content="A 3D paper-marbling art puzzle: sprinkle, comb and shape paint on thickened water, earn the master's seal, then lay the paper. Plays in the browser.">
+<meta property="og:title" content="Ebru: kitreli suda boya bulmacası">
+<meta property="og:description" content="Kitreli suda boya serp, bizle çiz, taraklı desen çek: 3D geleneksel Türk ebrusu bulmacası. 18 ders, günlük meydan okuma, tek nefes kipi. Tarayıcıda, kurulumsuz.">
+<meta property="og:locale" content="tr_TR">
+<meta property="og:site_name" content="Claude Game Arena">
+<meta property="og:image:alt" content="Ebru: ahşap bir teknede kitreli suya serpilmiş renkli boyalar">
 <meta property="og:url" content="https://furkiozknn.github.io/ebru/">
 <meta property="og:image" content="https://furkiozknn.github.io/ebru/docs/card.jpg">
 <meta property="og:image:width" content="960">
 <meta property="og:image:height" content="540">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Ebru: kitreli suda boya bulmacası">
+<meta name="twitter:description" content="Kitreli suda boya serp, bizle çiz, taraklı desen çek: 3D geleneksel Türk ebrusu bulmacası. 18 ders, günlük meydan okuma, tek nefes kipi. Tarayıcıda, kurulumsuz.">
+<meta name="twitter:image" content="https://furkiozknn.github.io/ebru/docs/card.jpg">
+<meta name="theme-color" content="#120D0A">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23120D0A'/%3E%3Cpath d='M4 18c14-8 22 8 56 0v8c-34 8-42-8-56 0z' fill='%231E6FB8'/%3E%3Cpath d='M4 36c14-8 22 8 56 0v8c-34 8-42-8-56 0z' fill='%23E8912D'/%3E%3Cpath d='M32 6c8 6 10 14 0 24-10-10-8-18 0-24z' fill='%23A8321D'/%3E%3Crect x='30.5' y='28' width='3' height='28' fill='%235C6B4F'/%3E%3C/svg%3E">
+<link rel="canonical" href="https://furkiozknn.github.io/ebru/">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Alegreya+Sans:ital,wght@0,400;0,500;0,700;0,800;1,400;1,500&family=Gilda+Display&display=swap" rel="stylesheet">
@@ -1379,6 +1388,22 @@ input[type=range] {
   #title .sub { margin: 2px 0 8px; }
   #title .panel { padding-top: 12px; padding-bottom: 12px; }
 }
+/* v2.1 Yenilikler penceresi, rozetler, alt baglantilar */
+.footer2 { margin-top: 6px; font-size: 13px; color: var(--ink3); text-align: center; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 2px 10px; }
+.footer2 a, .footer2 button { color: #12558F; background: none; border: 0; font: inherit; font-weight: 600; text-decoration: none; cursor: pointer;
+  min-height: 44px; padding: 0 8px; display: inline-flex; align-items: center; }
+.footer2 a:hover, .footer2 button:hover { text-decoration: underline; color: #0C3E6B; }
+.newsbox { text-align: left; max-width: 560px; }
+.newsbox h3 { font-size: 15px; margin: 14px 0 6px; color: var(--ink2); }
+.newslist { margin: 0; padding-left: 18px; font-size: 14px; line-height: 1.45; color: var(--ink2); }
+.newslist li { margin-bottom: 5px; }
+.badges { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; list-style: none; margin: 0; padding: 0; }
+.badge { display: flex; gap: 8px; align-items: center; padding: 8px 10px; border: 1px solid var(--rule); border-radius: 8px; font-size: 13px; color: var(--ink3); opacity: .7; }
+.badge b { display: block; font-size: 13.5px; color: var(--ink2); }
+.badge.on { opacity: 1; border-color: var(--wax); background: rgba(168, 50, 29, .08); }
+.badge.on .bd { background: var(--wax); color: #FDF4E2; }
+.badge .bd { flex: none; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: var(--rule); font-weight: 800; font-size: 13px; }
+@media (max-width: 480px) { .badges { grid-template-columns: 1fr; } }
 @media (prefers-reduced-motion: reduce) {
   .sealchip:not(.off) .seal, .pulse, .lay.pulse, .tbtn.pulse, .sw.pulse, .ibtn.pulse, .cbtn.pulse,
   .pressbox .sheetimg.reveal, .pressbox .pstamp.reveal {
@@ -2601,6 +2626,7 @@ window.ArenaCore = { version: VERSION, kalite, render, kabuk, his, kamera, test,
     <p class="rankline" id="rankLine"></p>
     <p class="fact" id="factLine"></p>
     <p class="footer">Claude Game Arena · <a href="https://github.com/Furkiozknn" target="_blank" rel="noopener">built by Claude Fable 5.1</a></p>
+    <p class="footer2"><button type="button" id="bNews"><span id="newsTag">v2.1 · Kasım 2026</span>&nbsp;·&nbsp;<span data-t="newsBtn"></span></button><a id="aHub" href="https://furkiozknn.github.io/" target="_blank" rel="noopener" data-t="moreGames"></a></p>
   </div>
 </div>
 
@@ -2640,6 +2666,17 @@ window.ArenaCore = { version: VERSION, kalite, render, kabuk, his, kamera, test,
     <div class="row"><span class="lbl" data-t="fullscreen"></span><button class="btn" id="bFull"><i data-icon="full"></i><span data-t="fullscreen"></span></button></div>
     <button class="btn w" id="bA11y"><span data-t="a11y"></span></button>
     <button class="btn primary w" id="bSetBack" style="margin-top:6px"><span data-t="back"></span></button>
+  </div>
+</div>
+
+<!-- Yenilikler + rozetler (v2.1) -->
+<div id="news" class="overlay" hidden>
+  <div class="panel glass col newsbox" role="dialog" aria-modal="true" aria-labelledby="newsH">
+    <h2 class="serif" id="newsH"><span data-t="newsTitle"></span> <small id="newsVer"></small></h2>
+    <ul class="newslist" id="newsList"></ul>
+    <h3 class="serif"><span data-t="badgesTitle"></span> <span id="badgeCount"></span></h3>
+    <ul class="badges" id="badgeList"></ul>
+    <button class="btn primary w" id="bNewsBack" style="margin-top:12px"><span data-t="back"></span></button>
   </div>
 </div>
 
@@ -2768,6 +2805,7 @@ const ARENA_URL = 'https://furkiozknn.github.io/ebru/';
 // first frame and skipped with ?noassets (or on file://, where WebGL cannot read a local image).
 const ASSETS = { used: !FLAG.noassets, loaded: [], failed: [], skipped: FLAG.noassets, note: 'mascot PNGs only, everything else procedural' };
 const KEY = 'arena.ebru.';
+const APP_VERSION = 'v2.1', APP_DATE = { tr: 'Kasım 2026', en: 'November 2026' };
 function load(k, def) { try { const v = localStorage.getItem(KEY + k); return v ? Object.assign(def, JSON.parse(v)) : def; } catch (e) { return def; } }
 function store(k, v) { if (FLAG.nosave || FLAG.auto) return; try { localStorage.setItem(KEY + k, JSON.stringify(v)); } catch (e) { /* private mode */ } }
 const isPhone = matchMedia('(pointer:coarse)').matches && Math.min(screen.width, screen.height) < 820;
@@ -2850,6 +2888,11 @@ const I18N = {
     daily: 'Günün Meydan Okuması', dailyLesson: 'Günün dersi: {n}', dailyStreak: 'Seri {s} gün · en iyi {b}', dailyDone: 'bugün tamam',
     dailyNote: 'Günlük derste yıldız ve mühür ders haritasına yazılmaz.', share: 'Paylaş', another: 'Başka oyun', a11y: 'Erişilebilirlik',
     shareLesson: 'Ders {n} · %{m} uyum · {s}/3 yıldız', shareDaily: 'Günün Meydan Okuması {d} · seri {s}', shareNefes: 'Tek Nefes · {b}/{m} nefes · {sec} sn',
+    newsBtn: 'Yenilikler', moreGames: 'Diğer oyunlar', newsTitle: 'Yenilikler', badgesTitle: 'Rozetler',
+    news1: 'Yeni pencere: sürüm notları ve rozet koleksiyonu.', news2: 'Rozetler kayıtlı ilerlemenden hesaplanır; eski kayıtlarla da çalışır.',
+    news3: 'Telefonda ustanın notu artık boya adının üstüne binmiyor.', news4: 'Ana ekranda “Diğer oyunlar” bağlantısı; sayfa bilgileri Türkçeleşti, simge ve 404 sayfası eklendi.',
+    bdFirst: 'İlk kâğıt', bdFirstD: 'Bir dersi çöz', bdCh1: 'Temel usta', bdCh1D: '1. bölümü bitir', bdCh2: 'Tarak ustası', bdCh2D: '2. bölümü bitir', bdCh3: 'Çiçek ustası', bdCh3D: '3. bölümü bitir',
+    bdSeal: 'Mühürlü', bdSealD: '3 usta mührü', bdGal: 'Koleksiyoncu', bdGalD: 'Galeride 5 sayfa', bdBind: 'Ciltçi', bdBindD: 'Bir sayfayı ciltle', bdBreath: 'Tek nefes', bdBreathD: 'Duvara bir baskı as', bdStreak: 'Düzenli', bdStreakD: '3 günlük meydan okuma serisi',
     shareEnd: '18/18 ders · {s}/54 yıldız · {n}/18 mühür', badgeFirst: 'İlk ebru', badgeSeal: 'İlk usta mührü', badgeAll: 'Ebru ustası',
   },
   en: {
@@ -2895,6 +2938,11 @@ const I18N = {
     daily: 'Daily challenge', dailyLesson: 'Today\'s lesson: {n}', dailyStreak: 'Streak {s} · best {b}', dailyDone: 'done today',
     dailyNote: 'Stars and seals from the daily lesson do not go on the lesson map.', share: 'Share', another: 'Another game', a11y: 'Accessibility',
     shareLesson: 'Lesson {n} · {m}% match · {s}/3 stars', shareDaily: 'Daily challenge {d} · streak {s}', shareNefes: 'One Breath · {b}/{m} breaths · {sec} s',
+    newsBtn: 'What\'s new', moreGames: 'More games', newsTitle: 'What\'s new', badgesTitle: 'Badges',
+    news1: 'New window: release notes and a badge collection.', news2: 'Badges are computed from your saved progress, so old saves work too.',
+    news3: 'On phones the master\'s note no longer overlaps the pigment name.', news4: 'A “More games” link on the title screen; page info is now Turkish, with an icon and a 404 page.',
+    bdFirst: 'First sheet', bdFirstD: 'Solve a lesson', bdCh1: 'Basics master', bdCh1D: 'Finish chapter 1', bdCh2: 'Comb master', bdCh2D: 'Finish chapter 2', bdCh3: 'Flower master', bdCh3D: 'Finish chapter 3',
+    bdSeal: 'Sealed', bdSealD: '3 master seals', bdGal: 'Collector', bdGalD: '5 sheets in the gallery', bdBind: 'Bookbinder', bdBindD: 'Bind a sheet', bdBreath: 'One breath', bdBreathD: 'Hang a print on the wall', bdStreak: 'Regular', bdStreakD: '3-day daily streak',
     shareEnd: '18/18 lessons · {s}/54 stars · {n}/18 seals', badgeFirst: 'First ebru', badgeSeal: 'First master\'s seal', badgeAll: 'Ebru master',
   },
 };
@@ -4453,7 +4501,7 @@ function rankHtml() { return `<span class="seal">${ICON.seal}</span>${t('rankLin
 // ---------------------------------------------------------------------------
 // Screens
 // ---------------------------------------------------------------------------
-const OVERLAYS = ['title', 'map', 'pause', 'settings', 'result', 'gallery', 'ending', 'press', 'wall'];
+const OVERLAYS = ['title', 'map', 'pause', 'settings', 'result', 'gallery', 'ending', 'press', 'wall', 'news'];
 function showOverlay(id) { for (const o of OVERLAYS) $(o).hidden = o !== id; if (id) { const b = $(id).querySelector('button:not([hidden]):not(:disabled)'); if (b) b.focus(); } }
 // Üst panelin alt kenarı (--hudb): telefonda hedef önizlemesi panelin altına yerleşir.
 if (window.ResizeObserver) new ResizeObserver(() => { const b = $('hud').getBoundingClientRect().bottom; if (b > 0) document.documentElement.style.setProperty('--hudb', Math.round(b) + 'px'); }).observe($('hud'));
@@ -4568,7 +4616,8 @@ function updateHud() {
     $('hStars').innerHTML = [0, 1, 2].map(i => ICON.star.replace('<svg', `<svg class="${i < s ? 'on' : ''}"`)).join('');
     // the live critique line: the worst deviation, or the master's nod from 90 % up
     const c = $('crit'), d = G.crit[0], show = G.state === 'play' && G.strokes.length > 0 && (d || G.match >= 0.9);
-    c.hidden = !show; if (show) { c.textContent = G.match >= 0.9 || !d ? t('critGood') : critText(d); c.classList.toggle('good', G.match >= 0.9 || !d); c.style.bottom = `calc(${$('tools').offsetHeight + 16}px + var(--sa-b))`; }
+    /* v2.1: boya adı etiketinin üstünde dur (telefonda üst üste biniyordu) */
+    c.hidden = !show; if (show) { c.textContent = G.match >= 0.9 || !d ? t('critGood') : critText(d); c.classList.toggle('good', G.match >= 0.9 || !d); c.style.bottom = `calc(${$('tools').offsetHeight + 16 + ($('swName').offsetHeight ? $('swName').offsetHeight + 6 : 0)}px + var(--sa-b))`; }
   }
   if (G.nefes) nefesHud();
   $('bUndo').disabled = !G.undo.length;
@@ -4627,6 +4676,7 @@ function applyTexts() {
   $('bLang').textContent = SET.lang.toUpperCase(); $('bLang2').textContent = SET.lang === 'tr' ? 'English' : 'Türkçe';
   for (const b of document.querySelectorAll('#toolGrp .tbtn')) { b.title = t(b.dataset.tool); b.setAttribute('aria-label', t(b.dataset.tool)); }
   for (const b of document.querySelectorAll('#swatches .sw')) { const nm = PAL[+b.dataset.c][SET.lang]; b.title = nm; b.setAttribute('aria-label', nm); }
+  $('newsTag').textContent = APP_VERSION + ' · ' + APP_DATE[SET.lang]; if (!$('news').hidden) openNews();
   showColourName();
   if (G.L && (G.state === 'play' || G.state === 'laying')) $('hLesson').textContent = lessonLabel(G.L);
   if (G.free && G.state === 'play') $('hLesson').textContent = t(G.nefes ? 'nefes' : 'freeTitle');
@@ -4741,6 +4791,7 @@ addEventListener('keydown', e => {
   if (k === 'm') { toggleMusic(); return; } if (k === 'x') { toggleSfx(); return; } if (k === 'l') { setLang(SET.lang === 'tr' ? 'en' : 'tr'); return; }
   if (k === 'f' && G.state === 'play') { toggleFullscreen(); return; }
   if (k === 'escape' && !$('wall').hidden) { closeWall(); return; }
+  if (k === 'escape' && !$('news').hidden) { closeNews(); return; }
   if (k === 'p' || k === 'escape') {
     if (G.state === 'play') { togglePause(); e.preventDefault(); }
     else if (G.state === 'map' || G.state === 'gallery' && G.galleryFrom !== 'play') { if (k === 'escape') goTitle(); }
@@ -4796,6 +4847,27 @@ $('bEFree').addEventListener('click', () => { sfxClick(); beginFree(); });
 $('bGal2').addEventListener('click', () => { bootAudio(); sfxClick(); openGallery('title'); });
 $('bGallery').addEventListener('click', () => { sfxClick(); openGallery('play'); });
 $('bGalBack').addEventListener('click', () => { sfxClick(); closeGallery(); });
+// v2.1: Yenilikler penceresi + rozetler. Rozetler kayıtlı ilerlemeden (PROG, GALLERY, BOUND, WALL, günlük seri) hesaplanır; yeni kayıt anahtarı yok.
+function badgeList() {
+  const done = (a, b) => { for (let i = a; i < b; i++) if (!(PROG.stars[i] > 0)) return false; return true; };
+  let streak = 0; try { if (ARENA) streak = ARENA.daily('ebru').best || 0; } catch (e) { streak = 0; }
+  return [
+    ['bdFirst', LESSONS.some((_, i) => PROG.stars[i] > 0)], ['bdCh1', done(0, 6)], ['bdCh2', done(6, 12)], ['bdCh3', done(12, 18)],
+    ['bdSeal', sealCount() >= 3], ['bdGal', GALLERY.length >= 5], ['bdBind', BOUND.some(Boolean)], ['bdBreath', WALL.length >= 1], ['bdStreak', streak >= 3],
+  ];
+}
+function openNews() {
+  $('newsVer').textContent = APP_VERSION + ' · ' + APP_DATE[SET.lang];
+  $('newsList').innerHTML = [1, 2, 3, 4].map(n => `<li>${t('news' + n)}</li>`).join('');
+  const bl = badgeList(); $('badgeCount').textContent = `${bl.filter(b => b[1]).length}/${bl.length}`;
+  $('badgeList').innerHTML = bl.map(([k, on]) => `<li class="badge${on ? ' on' : ''}"><span class="bd" aria-hidden="true">${on ? '\u2713' : ''}</span><span><b>${t(k)}</b>${t(k + 'D')}</span></li>`).join('');
+  showOverlay('news'); $('news').scrollTop = 0;
+}
+function closeNews() { showOverlay('title'); refreshTitle(); }
+$('bNews').addEventListener('click', () => { bootAudio(); sfxClick(); openNews(); });
+$('bNewsBack').addEventListener('click', () => { sfxClick(); closeNews(); });
+$('newsTag').textContent = APP_VERSION + ' · ' + APP_DATE[SET.lang];
+if (ARENA && ARENA.portal && ARENA.portal.name !== 'none') $('aHub').hidden = true; // portallarda çapraz tanıtım yok (arena-kit v1.3.1 kuralı)
 $('bSettings').addEventListener('click', () => { bootAudio(); sfxClick(); openSettings('title'); });
 $('bPSettings').addEventListener('click', () => { sfxClick(); openSettings('pause'); });
 $('bSetBack').addEventListener('click', () => { sfxClick(); closeSettings(); });

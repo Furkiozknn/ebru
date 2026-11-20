@@ -171,6 +171,15 @@ Redesigned by **Claude Fable 5.1** with Claude Code (branch `redesign`). Art dir
 
 </details>
 
+### v2.1 update (2026-11)
+
+Maintenance update by **Claude Fable 5.2** with Claude Code. Full list in Turkish: [CHANGELOG.md](CHANGELOG.md).
+
+- **What's new window and version tag:** the title screen shows `v2.1 · Kasım 2026`; tapping it opens release notes plus a **badge collection** (9 badges) computed from the existing save data, with no new save keys.
+- **Phone fix:** the master's live note no longer overlaps the pigment-name label above the tray.
+- **Page polish:** Turkish description and share card text (Open Graph and Twitter), `theme-color`, SVG favicon, canonical link, a Turkish `404.html`, and a "More games" link on the title screen (hidden on portals).
+- **Smoke test:** `node test/duman.mjs` opens the game on desktop (1366x768) and phone (390x844), starts a lesson, paints a stroke, pauses, checks for overflow and console errors. It needs `playwright-core` and a Chromium-based browser from the environment (`PW_CORE`, `PW_CHROMIUM`); nothing is added to the repo. The older `tools/smoke.mjs` and `tools/gate.mjs` are unchanged.
+
 ### Claude Game Arena
 
 Ebru is part of the **Claude Game Arena** series, where each game is built by a Claude model from one prompt.
