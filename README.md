@@ -22,10 +22,26 @@
 <!-- portals:end -->
 
 <p align="center">
+  <strong>Ebru, ebru, suyu tara! Fırçayla serp, kâğıdı yavaş kaldır. Türkçe kolay mı? Oyunda daha kolay.</strong>
+</p>
+
+<p align="center">
+  <strong>Turkish is easy… ON WATER? The game song asks the question; the game gives you the answer.</strong>
+</p>
+
+<p align="center">
+  Ebru: geleneksel Türk kâğıt ebrusu üzerine 3B sanat bulmacası. Koyulaştırılmış suya toprak boyaları serp, ibre ve tarakla çek, lale ve karanfil biçimle; tepsi ustanın desenine uyunca kâğıdı yatır.
+</p>
+
+<p align="center">
   <strong>A 3D art puzzle about traditional Turkish paper marbling (ebru): sprinkle earth pigments on thickened water, draw through them with the awl and the comb, shape tulips and carnations, and lay the paper when the tray matches the master's pattern.</strong>
 </p>
 
 <!-- gameplay gif -->
+
+## Şarkı videosu / Song video
+
+**Ebru · Oyun Şarkısı**: oyunun tanıtım şarkısı videosu, paylaşım videoları deposunda: [social-videos / 2026-11](https://github.com/Furkiozknn/social-videos/blob/master/2026-11/2026-11-21-ebru-telefon.mp4). Videonun görsel stil notları: [docs/STIL.md](docs/STIL.md).
 
 ## Features
 
