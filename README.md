@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://furkiozknn.github.io/ebru/">
-    <img src="docs/card.jpg" width="100%" alt="Ebru: a 3D paper-marbling art puzzle. Sprinkle, comb and shape paint on thickened water in an old workshop, then lay the paper. Click to play in your browser.">
+    <img src="docs/card-3d.jpg" width="100%" alt="Ebru: a 3D paper-marbling art puzzle. Sprinkle, comb and shape paint on thickened water in an old workshop, then lay the paper. Click to play in your browser.">
   </a>
 </p>
 
@@ -29,13 +29,29 @@
 
 ## Features
 
+<p align="center">
+  <img src="docs/features.jpg" width="100%" alt="Ebru promo image: a young marbling master with round glasses and a white kitten at a tray of swirling paint, beside five features: 18 lessons in 3 chapters, a marbling simulation, the master's seals, a free tray and gallery, and a single-file 60 fps build.">
+</p>
+
+<details>
+<summary><b>Feature details</b></summary>
+
 - **18 lessons in 3 chapters:** Master basic patterns (battal, gelgit, şal, bülbül yuvası), combed patterns (taraklı, kılçıklı, wavy and double combing, hafif) and flower ebru (hatip, tulip, carnation, hyacinth, daisy, poppy) with progressive pigment and tool unlocks and master technique notes.
 - **Mathematical marbling simulation:** Every drop is a closed polygon and every tool deforms the surface in closed form across fixed 8-unit steps; new drops push older rings outward, the awl draws a chevron wake, and the comb pulls 25 tines at once without colours ever mixing into mud.
 - **Master's critique & 18 seals:** Real-time feedback checks pigment volume and centroids against the target; reach 80% match to lay the paper, or achieve 90% within par strokes and with no hints to earn a red master's seal, rising from çırak through kalfa to usta across 54 stars.
 - **Free tray, water thickness & gallery:** Paint freely on thin, medium, or thick water with 12-stroke undo, store up to 12 sheets in the 256 px gallery, and bind any sheet into a leather-cornered book cover while finished prints hang to dry on the line.
 - **Ultra-lean web performance:** A single `index.html` with Three.js r170 delivering 60 fps at 14–18 draw calls on Intel UHD 620 (5.4–5.9k triangles, 14 calls on `?low`), verified by an automated bot across all 18 lessons with 48/54 stars, 12/18 seals, and 0 JS errors.
 
+</details>
+
 ## How to play
+
+<p align="center">
+  <img src="docs/how-to-play.jpg" width="100%" alt="How to play Ebru: sprinkle pigments, draw and comb, then lay the paper. The girl holds up a marbled print while the kitten watches; a key rail shows 1 to 4 tools, Enter, H, Z, R, P and Esc.">
+</p>
+
+<details>
+<summary><b>Goal and steps</b></summary>
 
 > [!TIP]
 > **Goal:** Recreate the master's pattern in the corner. Reach 80% match to lay the paper. Earn up to 3 stars per lesson: solve, reach 90% match, and stay within par strokes.
@@ -43,6 +59,8 @@
 1. **Sprinkle pigments (`1`, `4`):** Select a tool and an earth pigment from the bottom walnut tray. Drag over the water to sprinkle drops with the brush (`1`), or open a wide ring for flowers with the big drop (`4`).
 2. **Draw and comb (`2`, `3`):** Draw through the wet size with the awl / *biz* (`2`) to pull veins and petals, or drag the 25-tine comb / *tarak* (`3`) across the tray to produce wavy, chevron, or combed patterns.
 3. **Lay the paper (`Enter`):** Watch the master's live critique as the match score rises; at 80% match the screen rim glows. Press **Lay the paper** (`Enter`) to drop the paper onto the size and take up your print.
+
+</details>
 
 <details>
 <summary><b>Techniques, seals and free tray</b></summary>
