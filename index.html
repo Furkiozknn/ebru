@@ -1416,6 +1416,79 @@ html[data-arena-reduced-motion] :is(.sealchip:not(.off) .seal, .pulse, .pressbox
 }
 #title .daily small { font-weight: 500; opacity: 0.8; }
 a.btn { text-decoration: none; }
+
+/* ==========================================================================
+   stil-3d (2026-11-23): the song video's sunlit chibi-3D workshop. Honey wood, cream clay, soft warm shadows,
+   round corners; the ebru master and the white kitten (assets/3d/, Gemini renders) sit in card corners.
+   ========================================================================== */
+html, body { background: #E9D6B8; }
+.glass, .panel { border-radius: 20px; border-color: #8A5A32; }
+.panel {
+  box-shadow: 0 0 0 4px rgba(255, 244, 222, 0.55), 0 22px 50px rgba(92, 52, 20, 0.45), 0 6px 16px rgba(92, 52, 20, 0.3);
+}
+.overlay { background: radial-gradient(ellipse at 50% 30%, rgba(255, 236, 200, 0.28), rgba(70, 42, 20, 0.5)); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+.overlay.clear { background: rgba(70, 42, 20, 0.12); }
+.btn {
+  border-radius: 14px; border-color: #8A5A32;
+  box-shadow: inset 0 -3px 0 rgba(138, 90, 50, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 4px 10px rgba(92, 52, 20, 0.22);
+}
+.btn:active:not(:disabled) { box-shadow: inset 0 2px 4px rgba(92, 52, 20, 0.35); }
+.btn.primary {
+  background: linear-gradient(180deg, #F6B45A, #D9822A); border-color: #A4581C; color: #2A1606;
+  box-shadow: inset 0 -4px 0 rgba(140, 66, 10, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.55), 0 6px 16px rgba(217, 130, 42, 0.45);
+}
+.seg { border-radius: 12px; border-color: #8A5A32; }
+.topbar, .tray {
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(122, 78, 42, 0.95), rgba(84, 52, 28, 0.97));
+  border: 1.5px solid rgba(255, 220, 170, 0.35); border-bottom: 3px solid #E8912D;
+  box-shadow: inset 0 1px 0 rgba(255, 240, 210, 0.3), 0 10px 26px rgba(92, 52, 20, 0.45);
+}
+.tray { border-bottom: 1.5px solid rgba(255, 220, 170, 0.35); border-top: 3px solid #E8912D; }
+.coach { border-radius: 18px; }
+/* card corner figures: never over a title, a text line or a button (they sit beside the logo, inside the padding) */
+.fig3d { position: absolute; width: auto; pointer-events: none; user-select: none; filter: drop-shadow(0 6px 8px rgba(92, 52, 20, 0.35)); z-index: 1; }
+.title { position: relative; }
+.title .fig3d.usta { left: 14px; top: 12px; height: 132px; }
+.title .fig3d.kedi { right: 12px; top: 40px; height: 96px; }
+#ending .fig3d.usta { left: 12px; top: 12px; height: 140px; }
+#ending .fig3d.kedi { right: 12px; top: 46px; height: 92px; }
+.coach h3 { display: flex; align-items: center; gap: 10px; }
+.coach h3 .yuz { width: 46px; height: 46px; border-radius: 50%; flex: none; background: radial-gradient(circle at 50% 40%, #FFF4DE, #EBC99A); box-shadow: 0 2px 6px rgba(92, 52, 20, 0.3); object-fit: cover; }
+.rhead .yuz { width: 44px; height: 44px; border-radius: 50%; flex: none; background: radial-gradient(circle at 50% 40%, #FFF4DE, #EBC99A); box-shadow: 0 2px 6px rgba(92, 52, 20, 0.3); margin-right: 4px; }
+.rhead img.cat { width: 84px; height: 84px; filter: drop-shadow(0 4px 6px rgba(92, 52, 20, 0.3)); }
+.rhead { gap: 10px; }
+/* narrow phones: smaller figures, still in the corners beside the logo */
+@media (max-width: 480px) {
+  .title .fig3d.usta, #ending .fig3d.usta { left: 8px; top: 10px; height: 104px; }
+  .title .fig3d.kedi, #ending .fig3d.kedi { right: 6px; top: 34px; height: 74px; }
+}
+/* short desktop / landscape (1280x720, 1366x768): logo and figures shrink so every button stays on screen */
+@media (max-height: 800px) and (min-width: 761px) {
+  #title .logo, #ending .logo { width: 60px; height: 60px; margin-bottom: 0; }
+  #title h1 { font-size: 46px; padding-bottom: 8px; }
+  .title { padding-top: 14px; padding-bottom: 12px; }
+  #title .sub { margin: 4px 0 6px; }
+  #title .how { margin-bottom: 8px; font-size: 13.5px; line-height: 1.4; }
+  #title .col { gap: 8px; }
+  #title .row { gap: 8px; }
+  #title .btn { min-height: 44px; }
+  #title .best { margin-top: 8px; }
+  #title .fact { margin: 6px 0 0; font-size: 13px; }
+  #title .footer { margin-top: 8px; padding-top: 6px; }
+  #title .footer2 { margin-top: 0; }
+  .title .fig3d.usta, #ending .fig3d.usta { height: 100px; top: 10px; }
+  .title .fig3d.kedi, #ending .fig3d.kedi { height: 70px; top: 30px; }
+}
+/* in-game: the master and the kitten as round faces in the HUD brand corner (desktop and phone alike) */
+.brand { display: flex; align-items: center; gap: 6px; }
+.brand .hudyuz { width: 34px; height: 34px; border-radius: 50%; background: radial-gradient(circle at 50% 40%, #FFF4DE, #EBC99A); box-shadow: 0 0 0 2px rgba(255, 220, 170, 0.6); flex: none; }
+.brand .hudyuz.kedi { margin-left: -12px; }
+@media (max-width: 760px) { .brand span:not(.logo-s) { display: none; } .coach { top: calc(var(--hudb, 118px) + 8px); } }
+/* the lesson map is a long list on phones: its two buttons stay pinned at the bottom of the card */
+#map .panel > .row.end { position: sticky; bottom: -24px; margin: 12px -28px -24px; padding: 10px 28px 14px; z-index: 2;
+  background: linear-gradient(180deg, rgba(242, 216, 167, 0.9), #EBD3A6 40%); border-top: 1px solid rgba(138, 90, 50, 0.3); border-radius: 0 0 18px 18px; }
+@media (max-height: 440px) { .title .fig3d.usta, #ending .fig3d.usta { height: 64px; } .title .fig3d.kedi, #ending .fig3d.kedi { height: 46px; top: 12px; } }
 </style>
 <script>/*ARENA-KIT:BEGIN v1.3.2 sha256:ce77e23fab7c*/
 /* ARENA-KIT v1 — shared layer for the 21 Claude Game Arena games.
@@ -2552,7 +2625,7 @@ window.ArenaCore = { version: VERSION, kalite, render, kabuk, his, kamera, test,
 
 <!-- HUD -->
 <div id="hud" class="topbar glass" hidden>
-  <div class="brand"><span class="logo-s"></span><span>Ebru</span></div>
+  <div class="brand"><span class="logo-s"></span><span>Ebru</span><img class="yuz hudyuz" src="assets/3d/usta-yuz.webp" alt="" aria-hidden="true" width="160" height="160"><img class="yuz hudyuz kedi" src="assets/3d/kedi-yuz.webp" alt="" aria-hidden="true" width="128" height="128"></div>
   <div class="stats">
     <span class="lsn" id="hLesson"></span>
     <span class="mwrap" id="hMatchWrap"><span data-t="match"></span> <b id="hMatch">0%</b><span class="mbar"><i id="hMatchBar"></i><em></em></span></span>
@@ -2594,7 +2667,7 @@ window.ArenaCore = { version: VERSION, kalite, render, kabuk, his, kamera, test,
 <div id="crit" class="crit glass" hidden></div>
 <!-- the master's note, shown over the tray at the start of a lesson and faded at the first stroke -->
 <div id="coach" class="coach glass" hidden>
-  <h3 class="serif" id="coTitle"></h3>
+  <h3 class="serif"><img class="yuz" src="assets/3d/usta-yuz.webp" alt="" aria-hidden="true" width="160" height="160"><span id="coTitle"></span></h3>
   <div class="note" id="coNote"></div>
   <div class="chips" id="coChips"></div>
   <p class="tip" id="coTip"></p>
@@ -2604,6 +2677,8 @@ window.ArenaCore = { version: VERSION, kalite, render, kabuk, his, kamera, test,
 <!-- Title -->
 <div id="title" class="overlay">
   <div class="panel glass title">
+    <img class="fig3d usta" src="assets/3d/usta-selam.webp" alt="" aria-hidden="true" width="358" height="520">
+    <img class="fig3d kedi" src="assets/3d/kedi-bakiyor.webp" alt="" aria-hidden="true" width="386" height="300">
     <div class="logo" id="logoBig"></div>
     <h1 class="serif">Ebru</h1>
     <p class="sub" data-t="subtitle"></p>
@@ -2633,7 +2708,7 @@ window.ArenaCore = { version: VERSION, kalite, render, kabuk, his, kamera, test,
 <!-- Chapter map -->
 <div id="map" class="overlay" hidden>
   <div class="panel glass wide">
-    <div class="rhead"><h2 class="serif" data-t="lessons"></h2><span class="stars" id="mapStars"></span></div>
+    <div class="rhead"><img class="yuz" src="assets/3d/usta-yuz.webp" alt="" aria-hidden="true" width="160" height="160"><h2 class="serif" data-t="lessons"></h2><span class="stars" id="mapStars"></span></div>
     <div class="chcards" id="chcards"></div>
     <div class="row end" style="margin-top:12px">
       <button class="btn" id="bMapFree"><i data-icon="brush"></i><span data-t="free"></span></button>
@@ -2746,6 +2821,8 @@ window.ArenaCore = { version: VERSION, kalite, render, kabuk, his, kamera, test,
 <!-- Ending -->
 <div id="ending" class="overlay" hidden>
   <div class="panel glass title">
+    <img class="fig3d usta" src="assets/3d/usta-kagit.webp" alt="" aria-hidden="true" width="341" height="560">
+    <img class="fig3d kedi" src="assets/3d/kedi-kutlama.webp" alt="" aria-hidden="true" width="308" height="360">
     <div class="logo" id="logoEnd"></div>
     <h2 class="serif" data-t="endTitle" style="font-size:30px"></h2>
     <p class="sub" data-t="endSub"></p>
@@ -2803,7 +2880,7 @@ const ARENA = window.Arena && window.Arena.version ? window.Arena : null;
 const ARENA_URL = 'https://furkiozknn.github.io/ebru/';
 // Every mesh, texture and sound is generated in code; the only files are the three mascot PNGs (v2), loaded after the
 // first frame and skipped with ?noassets (or on file://, where WebGL cannot read a local image).
-const ASSETS = { used: !FLAG.noassets, loaded: [], failed: [], skipped: FLAG.noassets, note: 'mascot PNGs only, everything else procedural' };
+const ASSETS = { used: !FLAG.noassets, loaded: [], failed: [], skipped: FLAG.noassets, note: 'stil-3d webp renders (characters, back wall) only, everything else procedural' };
 const KEY = 'arena.ebru.';
 const APP_VERSION = 'v2.1', APP_DATE = { tr: 'Kasım 2026', en: 'November 2026' };
 function load(k, def) { try { const v = localStorage.getItem(KEY + k); return v ? Object.assign(def, JSON.parse(v)) : def; } catch (e) { return def; } }
@@ -3598,11 +3675,12 @@ renderer.shadowMap.enabled = SET.quality !== 'low'; renderer.shadowMap.type = TH
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 // Redesign (2026-11) palette: ink & paper fine art. Walnut wood, cream paper, lime plaster, ebru blue, red ochre wax,
 // brass, zinc. Every mesh colour below comes from this table so the room reads as one material family.
-const C = { walnut: 0x5a3b24, walnutDark: 0x3e2816, oak: 0x8a6240, oakLight: 0xa57a4e, plaster: 0xd8c7a8, plasterDark: 0xb49b78,
+// stil-3d: lighter honey wood and cream clay plaster, as in the song video's sunlit workshop
+const C = { walnut: 0x9a643a, walnutDark: 0x7a4a2a, oak: 0xc98f55, oakLight: 0xdba36a, plaster: 0xf2e2c6, plasterDark: 0xd8bf98,
   paper: 0xefe6d2, blue: 0x1E6FB8, ochre: 0xB5452C, brass: 0xc9a227, zinc: 0x7d8178, kilimRed: 0x8a3a2a, kilimBlue: 0x2c4a8a, ink: 0x2a2520, shade: 0x2a1d12 };
-const scene = new THREE.Scene(); scene.background = new THREE.Color(C.shade);
+const scene = new THREE.Scene(); scene.background = new THREE.Color(0xe9d6b8);
 // a little warm haze towards the far wall: the window light reads as air, not as a flat backdrop
-scene.fog = new THREE.Fog(0x4a3626, 3.2, 8.5);
+scene.fog = new THREE.Fog(0xe2c9a2, 3.6, 9.5);
 const camera = new THREE.PerspectiveCamera(42, 1, 0.05, 30);
 const TRAY_W = 0.8, TRAY_H = 0.6, TRAY_Y = 0.80, TABLE_Y = 0.745;
 const trayCentre = new THREE.Vector3(0, TRAY_Y, 0);
@@ -3684,7 +3762,7 @@ const paperMat = new THREE.MeshLambertMaterial({ vertexColors: true, map: paperG
 const W = woodParts, P = paperParts; // shorthand for the lists below
 
 // floor planks (oak, grain along x) and a kilim with its own woven texture
-for (let i = 0; i < 16; i++) box(0.36, 0.02, 7, -2.7 + i * 0.36, -0.01, -0.8, i % 2 ? 0x6b4a2e : 0x74522f, 0, W, 0.14, true);
+for (let i = 0; i < 16; i++) box(0.36, 0.02, 7, -2.7 + i * 0.36, -0.01, -0.8, i % 2 ? 0xb07a48 : 0xbd8752, 0, W, 0.14, true);
 { const k = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 1.4), new THREE.MeshLambertMaterial({ map: kilimTex })); k.rotation.x = -Math.PI / 2; k.position.set(0, 0.004, -0.1); k.receiveShadow = true; scene.add(k); }
 // walls: lime plaster, darker towards the floor (vertex colour gradient), a walnut skirting and a picture rail
 function wall(w, h, d, x, y, z) { const g = box(w, h, d, x, y, z, C.plaster, 0, parts, 0.05); const p = g.attributes.position, c = g.attributes.color; for (let i = 0; i < p.count; i++) { const f = 0.78 + 0.22 * Math.min(1, p.getY(i) / 2.2); c.setXYZ(i, c.getX(i) * f, c.getY(i) * f, c.getZ(i) * f); } }
@@ -3962,7 +4040,7 @@ const sun = new THREE.DirectionalLight(0xffd9a6, 2.5); sun.position.set(-0.9, 2.
 sun.castShadow = SET.quality !== 'low'; sun.shadow.mapSize.set(1024, 1024);
 sun.shadow.camera.left = -1.1; sun.shadow.camera.right = 1.1; sun.shadow.camera.top = 1.1; sun.shadow.camera.bottom = -1.1; sun.shadow.camera.near = 0.5; sun.shadow.camera.far = 7; sun.shadow.bias = -0.0006; sun.shadow.normalBias = 0.01;
 // warm plaster bounce from above, walnut floor bounce from below; a cool fill from the room side so wood keeps its shape
-const hemi = new THREE.HemisphereLight(0xffe9cc, 0x4a3222, 0.85); scene.add(hemi);
+const hemi = new THREE.HemisphereLight(0xfff0d8, 0x9a6a40, 1.25); scene.add(hemi);
 const fill = new THREE.DirectionalLight(0xa9bfe0, 0.4); fill.position.set(1.6, 1.4, 2.2); scene.add(fill);
 // the oil lamp (kandil) on the far right of the table: a small warm pool of light that flickers (see stepLamp)
 const lamp = new THREE.PointLight(0xffb060, 0.9, 1.6, 2); lamp.position.set(0.76, TABLE_Y + 0.26, -0.47); scene.add(lamp);
@@ -4000,15 +4078,29 @@ function stepDust(dt) {
 // v2 mascot: the white Turkish Van kitten dozes on the left edge of the table, in the window light (the sill itself
 // is above the camera's view). A billboard sprite loaded after the first frame; ?noassets and file:// skip it.
 const MASCOT = { sprite: null, flickAt: 3, flick: 0 };
-const MASCOT_SRC = { sleep: 'assets/mascot/kedi-uyuyor.png', cheer: 'assets/mascot/kedi-kutlama.png', think: 'assets/mascot/kedi-dusunuyor.png' };
+// stil-3d (2026-11-23): the kitten and the ebru master are the song video's chibi-3D characters (assets/3d/, Gemini
+// renders on a white ground, cut out locally); the back wall is the video's sunlit workshop as one painted backdrop.
+const MASCOT_SRC = { sleep: 'assets/3d/kedi-uyuyor.webp', cheer: 'assets/3d/kedi-kutlama.webp', think: 'assets/3d/kedi-dusunuyor.webp' };
+// The camera frames the tray tightly, so the master has no free spot in the room: she appears in the HUD, the coach
+// note and the cards instead (HTML, the same renders).
+const BACKDROP = { mesh: null };
 function loadMascot() {
   if (FLAG.noassets || location.protocol === 'file:') { ASSETS.skipped = true; return; }
-  new THREE.TextureLoader().load(MASCOT_SRC.sleep, tex => {
-    tex.colorSpace = THREE.SRGBColorSpace;
+  const L = new THREE.TextureLoader();
+  const sprite = (src, done) => L.load(src, tex => {
+    tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = Math.min(4, renderer.capabilities.getMaxAnisotropy());
+    done(tex); ASSETS.loaded.push(src.replace('assets/', ''));
+  }, undefined, () => { ASSETS.failed.push(src.replace('assets/', '')); });
+  sprite(MASCOT_SRC.sleep, tex => {
     const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false }));
-    s.scale.set(0.24, 0.24, 1); s.position.set(-0.66, TABLE_Y + 0.085, -0.12); s.center.set(0.5, 0.42);
-    scene.add(s); MASCOT.sprite = s; ASSETS.loaded.push('mascot/kedi-uyuyor.png');
-  }, undefined, () => { ASSETS.failed.push('mascot/kedi-uyuyor.png'); });
+    s.scale.set(0.3, 0.3 * 320 / 507, 1); s.position.set(-0.68, TABLE_Y + 0.004, -0.12); s.center.set(0.5, 0.06);
+    scene.add(s); MASCOT.sprite = s;
+  });
+  // the painted back wall: window, shelves of paint pots, sheets drying on a line (in front of the old plaster wall)
+  sprite('assets/3d/arka.webp', tex => {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(6.2, 6.2 * 1000 / 1792), new THREE.MeshBasicMaterial({ map: tex, fog: false, toneMapped: false }));
+    m.position.set(0, 1.62, -1.5); scene.add(m); BACKDROP.mesh = m;
+  });
 }
 function stepMascot(dt) {
   const s = MASCOT.sprite; if (!s) return;
@@ -4472,9 +4564,9 @@ function finishSheet() {
   $('rFact').innerHTML = `<b>${t('didYouKnow')}</b> ${window.EBRU_FACTS[L.index % window.EBRU_FACTS.length][SET.lang]}`;
   // the kitten: cheering at three stars, thinking on "Not yet"
   const cat = $('rCat'); cat.hidden = true;
-  if (!FLAG.noassets && (stars === 3 || !solved)) {
+  if (!FLAG.noassets) { // stil-3d: a character on every result card (3 stars: the kitten cheers; a miss: it thinks; else the master waves)
     cat.onload = () => { cat.hidden = false; }; cat.onerror = () => { cat.hidden = true; };
-    cat.src = stars === 3 ? MASCOT_SRC.cheer : MASCOT_SRC.think; if (cat.complete && cat.naturalWidth) cat.hidden = false;
+    cat.src = stars === 3 ? MASCOT_SRC.cheer : !solved ? MASCOT_SRC.think : 'assets/3d/usta-selam.webp'; if (cat.complete && cat.naturalWidth) cat.hidden = false;
   }
   $('bBind').hidden = false; r.bound = false; $('bBind').querySelector('span').textContent = t('bind');
   $('bNext').hidden = !solved || !!daily; $('bNext').querySelector('span').textContent = L.index === 17 ? t('endTitle') : t('next');
